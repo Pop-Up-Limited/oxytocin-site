@@ -82,8 +82,8 @@ const word = i => POOL[i][LANG === 'zh' ? 1 : 0];
 const T_FADE = 0.8;            // light fades in
 const T_MAIN = 1.3;            // earliest the oxytocin box may appear...
 const P_MAIN = 0.5;            // ...and only once loading is past halfway
-const T_MIN = 2.6;             // never finish sooner, even if the server is instant
-const SPAWN_GAP = [0.35, 0.85], LIFE = [1.6, 3.4], MAX_LIVE = 5;
+const T_MIN = 3.0;             // never capture sooner, even if the server is instant (time for them to drift apart once)
+const SPAWN_GAP = [0.5, 1.1], LIFE = [1.6, 3.4], MAX_LIVE = 2;
 const MERGE_GAP = 0.07, MERGE_DUR = 0.26, T_RAMP = 0.18;
 // oxytocin confidence: up to ~0.6 while loading, ~0.68 when every box has merged, then a quick run to 1.00
 const CONF_LOAD = 0.62, CONF_MERGED = 0.68;
@@ -105,6 +105,7 @@ const FS = `
 precision highp float;
 uniform vec2 u_res; uniform float u_t, u_dpr; uniform vec4 u_ph;
 uniform vec3 u_paper, u_a, u_b; uniform float u_dark, u_gt, u_in, u_grain, u_frost;
+uniform vec2 u_c1, u_c2, u_rr; uniform float u_close, u_jig;
 float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
   return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
@@ -125,37 +126,40 @@ void main(){
   vec2 p=(gl_FragCoord.xy-.5*u_res)/S*2.;
   vec2 cp=gl_FragCoord.xy/u_dpr;
   float t=u_t;
-  // foreground: two round masses orbiting each other, always overlapping
-  vec2 m=.05*vec2(sin(t*.31+u_ph.z),cos(t*.37+u_ph.w));
-  float a=t*.5+u_ph.x, R=.17+.03*sin(t*.7+u_ph.y);
-  vec2 c1=m+R*vec2(cos(a),sin(a)), c2=m-R*vec2(cos(a),sin(a));
-  vec2 q=p+(vec2(fbm(p*1.3+vec2(0.,t*.15)),fbm(p*1.3+vec2(5.2,-t*.13)))-.5)*.14;
+  // foreground: two soft jelly lights. Each is a blurry, roughly round lump whose outline keeps
+  // changing; added together they fuse into one mass where they meet, and their colours blend.
+  vec2 c1=u_c1, c2=u_c2;
+  vec2 q=p+(vec2(fbm(p*1.1+vec2(0.,t*.13)),fbm(p*1.1+vec2(5.2,-t*.11)))-.5)*.22;
   vec2 d1=q-c1, d2=q-c2;
-  float r1=.70*(1.+.05*sin(atan(d1.y,d1.x)*2.+t*.8));
-  float r2=.64*(1.+.05*sin(atan(d2.y,d2.x)*2.-t*.7));
-  float b1=clamp((1.-smoothstep(.28,1.,length(d1)/r1))*u_in,0.,1.);
-  float b2=clamp((1.-smoothstep(.28,1.,length(d2)/r2))*u_in,0.,1.);
-
+  float a1=atan(d1.y,d1.x), a2=atan(d2.y,d2.x);
+  // uneven, breathing outline; the jiggle after a bump wobbles it like a gummy
+  float s1=1.+.13*sin(2.*a1+t*.7+u_ph.x)+.08*sin(3.*a1-t*1.1+u_ph.y)+u_jig*sin(4.*a1+t*9.);
+  float s2=1.+.12*sin(2.*a2-t*.8+u_ph.z)+.09*sin(3.*a2+t*1.2+u_ph.w)-u_jig*sin(4.*a2+t*9.);
+  float k1=exp(-pow(length(d1)/(u_rr.x*s1),2.)*1.9);
+  float k2=exp(-pow(length(d2)/(u_rr.y*s2),2.)*1.9);
+  float F=(k1+k2)*(1.+.25*u_close)*u_in;
+  float w=k2/(k1+k2+1e-4);
+  vec3 tint=mix(u_a,u_b,smoothstep(.15,.85,w));
+  float I=1.-exp(-F*1.7);                         // no hard edge anywhere: it just fades out
   vec3 bg=paper(cp), col;
   if(u_dark>.5){
-    vec3 g=u_a*b1*.8+u_b*b2*.8+(u_a+u_b)*b1*b2*.12;
-    col=bg+(1.-bg)*(1.-exp(-g*1.6));
+    col=bg+(1.-bg)*(1.-exp(-tint*F*1.25));
   } else {
-    col=bg*mix(vec3(1.),u_a,b1)*mix(vec3(1.),u_b,b2);
+    col=bg*mix(vec3(1.),tint,I);
+    col*=1.-.10*k1*k2*u_close;                   // a little deeper where they press together
   }
-  float mask=clamp(max(b1,b2)*1.4,0.,1.);
+  // gummy sheen: a soft light patch high on each lump
+  vec2 off=vec2(-.28,.3);
+  float hl=exp(-pow(length(q-c1-off*u_rr.x)/(u_rr.x*.38),2.))*k1+exp(-pow(length(q-c2-off*u_rr.y)/(u_rr.y*.38),2.))*k2;
+  col=mix(col,vec3(1.),clamp(hl,0.,1.)*.16*u_in);
+  float mask=clamp(I*1.2,0.,1.);
   if(u_frost>.5){
     // frosted glass: a still, fine matte surface in front of the moving light
-    float fine=n(cp*.9)*.6+n(cp*.43+7.)*.4;           // soft sub-2px tooth, smooth not speckled
-    float cloud=fbm(cp/38.+3.1);                       // milky unevenness, like sandblasted glass
-    float veil=u_dark>.5?.10:.16;                      // milky layer the light is seen through
+    float fine=n(cp*.9)*.6+n(cp*.43+7.)*.4;
+    float cloud=fbm(cp/38.+3.1);
+    float veil=u_dark>.5?.10:.14;
     col=mix(col,vec3(1.),(veil+(cloud-.5)*.10+(fine-.5)*.09)*mask);
-    // faint brighter rim where each mass turns away, like the edge of a frosted object
-    float e1=length(d1)/r1, e2=length(d2)/r2;
-    float rim=smoothstep(.55,.8,e1)*(1.-smoothstep(.8,1.,e1))*b1+smoothstep(.55,.8,e2)*(1.-smoothstep(.8,1.,e2))*b2;
-    col=mix(col,vec3(1.),clamp(rim,0.,1.)*.10);
   } else {
-    // grain: 3 css px cells, lightening only
     vec2 gp=floor(gl_FragCoord.xy/u_grain)+fract(u_gt*7.13)*vec2(311.,173.);
     float gr=h(gp);
     col=mix(col,vec3(1.),gr*gr*.22*mask);
@@ -177,7 +181,7 @@ gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STAT
 const aLoc = gl.getAttribLocation(prog, 'a');
 gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
 const U = {};
-['u_res', 'u_t', 'u_dpr', 'u_ph', 'u_paper', 'u_a', 'u_b', 'u_dark', 'u_gt', 'u_in', 'u_grain', 'u_frost'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
+['u_res', 'u_t', 'u_dpr', 'u_ph', 'u_paper', 'u_a', 'u_b', 'u_dark', 'u_gt', 'u_in', 'u_grain', 'u_frost', 'u_c1', 'u_c2', 'u_rr', 'u_close', 'u_jig'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
 
 const stage = document.getElementById('stage');
 let dpr = 1, W = 0, H = 0, safeTop = 0;
@@ -217,13 +221,46 @@ function applyTheme() {
   document.getElementById('hud').style.color = dark ? '#d8d8d8' : '#3a3630';
 }
 
-// blob centres, mirrored from the shader so the boxes ride the light
-function centres(t, ph) {
+// ---------- the two lights as characters ----------
+// A loop of about 8 s: snug together, drift apart, stay apart, hurry back, bump and bounce.
+// R is half the distance between their centres (units: half the short side = 1).
+const LOOP = 8, S0 = 2.2, GATHER = 0.45, R_SNUG = .15, R_APART = .42;
+const easeIn = k => k * k * k;
+function bounce(u) { return { R: R_SNUG - .04 * Math.exp(-5 * u) * Math.cos(14 * u), squash: .07 * Math.exp(-6 * u) * Math.sin(18 * u) }; }
+function loopPose(s) {
+  s = ((s % LOOP) + LOOP) % LOOP;
+  if (s < 2.4) return { R: R_SNUG + .012 * Math.sin(s * 2.6), squash: 0 };
+  if (s < 4.0) return { R: R_SNUG + (R_APART - R_SNUG) * ease((s - 2.4) / 1.6), squash: 0 };
+  if (s < 5.4) return { R: R_APART + .02 * Math.sin((s - 4) * 3), squash: 0 };
+  if (s < 6.2) return { R: R_APART + (.11 - R_APART) * easeIn((s - 5.4) / .8), squash: 0 };
+  return bounce(s - 6.2);
+}
+// gathering: once loading is done they come together and bump; the capture happens at that touch
+function body(t, e, ph) {
+  let pose;
+  if (run.gatherAt != null) {
+    const k = (e - run.gatherAt) / GATHER;
+    pose = k < 1 ? { R: run.gatherR + (.11 - run.gatherR) * easeIn(Math.max(0, k)), squash: 0 } : bounce((k - 1) * GATHER);
+  } else pose = loopPose(S0 + e);
+  const a = ph[0] + t * .35 + .4 * Math.sin(t * .23);
   const m = [.05 * Math.sin(t * .31 + ph[2]), .05 * Math.cos(t * .37 + ph[3])];
-  const a = t * .5 + ph[0], R = .17 + .03 * Math.sin(t * .7 + ph[1]);
-  const c1 = [m[0] + R * Math.cos(a), m[1] + R * Math.sin(a)];
-  const c2 = [m[0] - R * Math.cos(a), m[1] - R * Math.sin(a)];
-  return [c1, c2, m, [m[0] * .35, m[1] * .35]];
+  const c1 = [m[0] + pose.R * Math.cos(a), m[1] + pose.R * Math.sin(a)];
+  const c2 = [m[0] - pose.R * Math.cos(a), m[1] - pose.R * Math.sin(a)];
+  const r1 = .56 * (1 + .04 * Math.sin(t * 1.1)) * (1 + pose.squash);
+  const r2 = .52 * (1 + .04 * Math.sin(t * 1.3 + 1)) * (1 - pose.squash * .6);
+  const close = Math.max(0, Math.min(1, (R_APART - pose.R) / (R_APART - R_SNUG)));
+  return { c1, c2, m, r1, r2, R: pose.R, close, jig: Math.min(.12, Math.abs(pose.squash) * 1.6) };
+}
+// what the detector can see: one rect per light, and one around both
+const glowRect = (c, r) => [c[0], c[1], r * 1.5, r * 1.5];
+function union(p, q, pad) {
+  const L = Math.min(p[0] - p[2] / 2, q[0] - q[2] / 2) - pad, Rr = Math.max(p[0] + p[2] / 2, q[0] + q[2] / 2) + pad;
+  const B = Math.min(p[1] - p[3] / 2, q[1] - q[3] / 2) - pad, T = Math.max(p[1] + p[3] / 2, q[1] + q[3] / 2) + pad;
+  return [(L + Rr) / 2, (B + T) / 2, Rr - L, T - B];
+}
+function centres(bd) {
+  const A = glowRect(bd.c1, bd.r1), B = glowRect(bd.c2, bd.r2);
+  return { 0: bd.c1, 1: bd.c2, 2: bd.m, 3: [bd.m[0] * .35, bd.m[1] * .35], A, B, pair: union(A, B, .03), all: union(A, B, .09) };
 }
 
 // ---------- detection boxes ----------
@@ -266,7 +303,7 @@ function nextWord() {
 }
 
 function spawn(e, cs) {
-  const live = run.boxes.filter(b => !b.gone && !b.ghostUntil);
+  const live = run.boxes.filter(b => !b.gone && !b.ghostUntil && !b.track);
   const tall = tallness();
   let best = null;
   for (let tries = 0; tries < 10; tries++) {
@@ -314,12 +351,13 @@ function mainLabel(b, e) {
 function updateBox(b, e, cs, frozen) {
   if (b.gone || e < b.born) return;
   const main = run.main;
-  const jit = frozen ? 0 : b.main ? .035 * (1 - run.p * .8) : .03;
-  const base = rectOf(b, cs);
+  const jit = frozen ? 0 : b.main ? .03 * (1 - run.p * .8) : b.track ? .018 : .03;
+  if (b.hidden) { b.el.classList.add('off'); b.pos = null; return; }
+  const base = b.track ? cs[b.track] : rectOf(b, cs);
   const target = [base[0] + rnd(-.5, .5) * jit, base[1] + rnd(-.5, .5) * jit,
                   base[2] * (1 + rnd(-.5, .5) * jit * 3), base[3] * (1 + rnd(-.5, .5) * jit * 3)];
   if (!b.pos) b.pos = target.slice();
-  const k = frozen ? 1 : .35;
+  const k = frozen ? 1 : b.track ? .6 : .35;
   for (let i = 0; i < 4; i++) b.pos[i] += (target[i] - b.pos[i]) * k;
 
   let rect = b.pos;
@@ -364,7 +402,9 @@ function targetProgress(e) {
 
 function beginMerge(e, cs) {
   run.phase = 'merge';
-  const live = run.boxes.filter(b => !b.main && !b.gone && !b.ghostUntil && e >= b.born);
+  run.boxes.filter(b => b.hidden && !b.gone).forEach(kill);
+  const live = run.boxes.filter(b => !b.main && !b.gone && !b.ghostUntil && !b.hidden && e >= b.born && b.pos);
+  run.boxes.filter(b => !b.main && !b.gone && !b.pos).forEach(kill);
   const c = run.main.pos;
   live.sort((p, q) => Math.hypot(p.pos[0] - c[0], p.pos[1] - c[1]) - Math.hypot(q.pos[0] - c[0], q.pos[1] - c[1]));
   live.forEach((b, i) => { b.mergeAt = e + i * MERGE_GAP; b.drop = 0; });
@@ -385,8 +425,13 @@ function start() {
   const ph = [0, 0, 0, 0].map(() => Math.random() * 6.283);
   run = { boxes: [], deck: [], ph, hues: pickHues(), t0: Math.random() * 60, startAt: null, frame: 0,
           phase: 'detect', p: 0, serverP: 0, done: false, merged: 0, mergeTotal: 0, nextSpawn: .45 };
-  run.main = Object.assign(makeBox(COPY.main, true), { anchor: 3, off: [0, 0], size: [1.5, 1.42 * (tallness() > 1 ? 1.2 : 1)], born: Infinity });
-  run.boxes.push(run.main);
+  run.main = Object.assign(makeBox(COPY.main, true), { track: 'all', born: Infinity });
+  // one box per light while they are apart, one around both while they are together (until oxytocin takes over)
+  run.trackA = Object.assign(makeBox('', false), { track: 'A', born: .5, dieAt: Infinity, hidden: true });
+  run.trackB = Object.assign(makeBox('', false), { track: 'B', born: .5, dieAt: Infinity, hidden: true });
+  run.trackPair = Object.assign(makeBox('', false), { track: 'pair', born: .5, dieAt: Infinity, hidden: true });
+  run.boxes.push(run.main, run.trackA, run.trackB, run.trackPair);
+  run.apart = false; run.gatherAt = null;
   gl.uniform4fv(U.u_ph, ph);
   applyTheme();
   if (params.get('sim') !== 'off') simulateServer();
@@ -401,6 +446,9 @@ function draw(t, e) {
   gl.uniform1f(U.u_in, Math.min(1, e / T_FADE));
   gl.uniform1f(U.u_grain, GRAIN_PX * dpr);
   gl.uniform1f(U.u_frost, params.get('finish') === 'grain' ? 0 : 1);
+  const bd = run.bd;
+  gl.uniform2f(U.u_c1, bd.c1[0], bd.c1[1]); gl.uniform2f(U.u_c2, bd.c2[0], bd.c2[1]);
+  gl.uniform2f(U.u_rr, bd.r1, bd.r2); gl.uniform1f(U.u_close, bd.close); gl.uniform1f(U.u_jig, bd.jig);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 
@@ -411,7 +459,8 @@ function tick(now) {
   if (r.startAt === null) r.startAt = now;
   const e = (now - r.startAt) / 1000;
   const t = r.t0 + e;
-  const cs = centres(t, r.ph);
+  r.bd = body(t, e, r.ph);
+  const cs = centres(r.bd);
   draw(t, e);
   r.frame++;
   if (NOBOX) { r.raf = requestAnimationFrame(tick); return; }
@@ -421,11 +470,25 @@ function tick(now) {
   r.p = Math.max(r.p, r.p + (goal - r.p) * (r.phase === 'merge' ? .12 : .05));
 
   if (r.phase === 'detect') {
-    if (e >= r.nextSpawn && r.boxes.filter(b => !b.main && !b.gone && !b.ghostUntil).length < MAX_LIVE) {
+    if (e >= r.nextSpawn && r.boxes.filter(b => !b.main && !b.gone && !b.ghostUntil && !b.track).length < MAX_LIVE) {
       spawn(e, cs); r.nextSpawn = e + rnd(...SPAWN_GAP);
     }
     if (r.main.born === Infinity && r.p >= P_MAIN && e >= T_MAIN) r.main.born = e;
-    if (r.done && e >= T_MIN && r.main.pos && e - r.main.born >= .6) beginMerge(e, cs);
+    // apart or together (with a little hysteresis); frozen once they start gathering
+    if (r.gatherAt == null) {
+      const d = 2 * r.bd.R;
+      if (!r.apart && d > .66) r.apart = true; else if (r.apart && d < .56) r.apart = false;
+      const show = (b, on) => {
+        if (b.gone) return;
+        if (on && b.hidden) { b.hidden = false; b.label = nextWord(); b.labelAt = e; b.conf = rnd(.25, .5); }
+        else if (!on) b.hidden = true;
+      };
+      const mainUp = r.main.born !== Infinity && e >= r.main.born;
+      show(r.trackA, r.apart && e >= .5); show(r.trackB, r.apart && e >= .5);
+      show(r.trackPair, !r.apart && !mainUp && e >= .5);
+    }
+    if (r.gatherAt == null && r.done && e >= T_MIN - GATHER && r.main.pos && e - r.main.born >= .6) { r.gatherAt = e; r.gatherR = r.bd.R; }
+    if (r.gatherAt != null && e - r.gatherAt >= GATHER) beginMerge(e, cs);
   }
   if (r.phase === 'merge' && e >= r.shotAt) {
     // the capture: everything stops, only the oxytocin box stays, green at 1.00

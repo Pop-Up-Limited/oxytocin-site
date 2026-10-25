@@ -105,7 +105,7 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 </head>
 <body>
 <header class="bar">
-  <a class="mark" href="#top">oxytocin</a>
+  <a class="mark" href="#top" data-t="brand"></a>
   <nav class="nav"><a href="#values" data-t="navValues"></a><a href="#about" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a></nav>
   <button class="lang" id="lang" data-t="langSwitch"></button>
 </header>
@@ -143,7 +143,7 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 <footer class="foot" id="foot">
   <iframe data-src="intro.html?embed=1&nobox=1" title="" tabindex="-1" aria-hidden="true"></iframe>
   <div class="inner">
-    <div class="big">oxytocin</div>
+    <div class="big" data-t="brand"></div>
     <div class="links">
       <a href="#values" data-t="navValues"></a><a href="#about" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a>
       <small>© 2026 Oxytocin LLC</small>
@@ -158,7 +158,7 @@ document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
 
 const COPY = {
   en: {
-    navValues: 'Values', navAbout: 'About', navContact: 'Contact', langSwitch: '中文',
+    brand: 'oxytocin', navValues: 'Values', navAbout: 'About', navContact: 'Contact', langSwitch: '中文',
     eyebrow: 'What we do',
     title: ['We', 'make', 'software', 'that', 'feels', 'good', 'to', 'use.'],
     closing: 'That’s it.',
@@ -168,11 +168,11 @@ const COPY = {
     ask: 'Working on something? Let’s talk.', cta: 'Get in touch →',
   },
   zh: {
-    navValues: '价值观', navAbout: '关于', navContact: '联系', langSwitch: 'EN',
+    brand: '安妥心', navValues: '价值观', navAbout: '关于', navContact: '联系', langSwitch: 'EN',
     eyebrow: '我们做什么',
     title: ['我们做', '用起来', '让人', '舒服的', '软件。'],
     closing: '就这些。',
-    a1: 'Oxytocin 是一家独立的小工作室，设计和开发 App 与数字产品。',
+    a1: '安妥心（Oxytocin）是一家独立的小工作室，设计和开发 App 与数字产品。',
     a2: '我们想做让人用完觉得值得的东西，而不是让人停不下来的东西。',
     who: '公司', facts: 'Oxytocin LLC<br>美国怀俄明州<br>始于 2025 年',
     ask: '在做什么项目？聊聊吧。', cta: '联系我们 →',
@@ -200,6 +200,7 @@ const CHAPTERS = {
 }[LANG];
 
 document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = COPY[el.dataset.t]);
+document.title = LANG === 'zh' ? '安妥心 Oxytocin' : 'Oxytocin';
 // the intro inside the page speaks the page's language
 document.querySelectorAll('iframe[data-src]').forEach(f => f.src = `${f.dataset.src}&lang=${LANG}`);
 document.getElementById('lang').onclick = () => { localStorage.setItem('oxytocinLang', LANG === 'zh' ? 'en' : 'zh'); location.href = location.pathname + location.hash; };
