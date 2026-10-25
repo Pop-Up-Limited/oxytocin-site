@@ -136,18 +136,20 @@ void main(){
   // foreground: two soft jelly lights. Each is a blurry, roughly round lump whose outline keeps
   // changing; added together they fuse into one mass where they meet, and their colours blend.
   vec2 c1=u_c1, c2=u_c2;
-  vec2 q=p+(vec2(fbm(p*1.1+vec2(0.,t*.22)),fbm(p*1.1+vec2(5.2,-t*.19)))-.5)*.32;
+  vec2 q=p+(vec2(fbm(p*.7+vec2(0.,t*.18)),fbm(p*.7+vec2(5.2,-t*.16)))-.5)*.12;   // gentle, so outlines stay smooth
   // kneaded: each lump is squeezed along a slowly turning axis, like dough being worked
-  vec2 d1=knead(q-c1,t*.37+u_ph.x,.2*sin(t*1.05+u_ph.y)), d2=knead(q-c2,-t*.31+u_ph.z,.2*sin(t*.93+u_ph.w));
+  vec2 d1=knead(q-c1,t*.37+u_ph.x,.16*sin(t*1.05+u_ph.y)), d2=knead(q-c2,-t*.31+u_ph.z,.16*sin(t*.93+u_ph.w));
   float a1=atan(d1.y,d1.x), a2=atan(d2.y,d2.x);
   // uneven, breathing outline; the jiggle after a bump wobbles it like a gummy
-  float s1=1.+.17*sin(2.*a1+t*1.1+u_ph.x)+.10*sin(3.*a1-t*1.6+u_ph.y)+.05*sin(5.*a1+t*2.1)+u_jig*sin(4.*a1+t*9.);
-  float s2=1.+.16*sin(2.*a2-t*1.2+u_ph.z)+.11*sin(3.*a2+t*1.5+u_ph.w)+.05*sin(5.*a2-t*1.9)-u_jig*sin(4.*a2+t*9.);
+  // only low, slow bends: a bean or a pebble, never a point or a scatter
+  float s1=1.+.11*sin(2.*a1+t*.9+u_ph.x)+.05*sin(a1-t*.6+u_ph.y)+.6*u_jig*sin(3.*a1+t*9.);
+  float s2=1.+.10*sin(2.*a2-t*.8+u_ph.z)+.05*sin(a2+t*.7+u_ph.w)-.6*u_jig*sin(3.*a2+t*9.);
   float k1=exp(-pow(length(d1)/(u_rr.x*s1),2.)*1.9);
   float k2=exp(-pow(length(d2)/(u_rr.y*s2),2.)*1.9);
   float F=(k1+k2)*(1.+.25*u_close)*u_in;
-  float w=k2/(k1+k2+1e-4);
-  vec3 tint=mix(u_a,u_b,smoothstep(.15,.85,w));
+  // colour share from the log-ratio, so the two colours melt over a wide band instead of meeting at a line
+  float w=1./(1.+exp(-(log(k2+1e-5)-log(k1+1e-5))*.28));
+  vec3 tint=mix(u_a,u_b,w);
   float I=1.-exp(-F*1.7);                         // no hard edge anywhere: it just fades out
   vec3 bg=paper(cp), col;
   if(u_dark>.5){
