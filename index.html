@@ -34,7 +34,7 @@ a { color: inherit; }
 .nav { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--pill); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .nav a { font-size: 12px; padding: 6px 12px; border-radius: 999px; text-decoration: none; }
 .nav a:hover { background: var(--pill); }
-.spacer { width: 30px; }
+.lang { font: 12px var(--sans); color: var(--ink); background: var(--pill); border: 0; border-radius: 999px; padding: 7px 12px; cursor: pointer; }
 @media (max-width: 640px) { .nav { display: none; } }
 
 /* ---------- hero: the frosted intro stays pinned; the story rides up over it ---------- */
@@ -107,10 +107,10 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 <header class="bar">
   <a class="mark" href="#top">oxytocin</a>
   <nav class="nav"><a href="#values" data-t="navValues"></a><a href="#about" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a></nav>
-  <span class="spacer"></span>
+  <button class="lang" id="lang" data-t="langSwitch"></button>
 </header>
 
-<div class="hero" id="top"><iframe src="intro.html?embed=1&sim=instant" title="Oxytocin"></iframe></div>
+<div class="hero" id="top"><iframe data-src="intro.html?embed=1&sim=instant" title="Oxytocin"></iframe></div>
 
 <section class="story" id="values">
   <div class="rail">
@@ -141,7 +141,7 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 <div class="curtain-end"></div>
 
 <footer class="foot" id="foot">
-  <iframe src="intro.html?embed=1&nobox=1" title="" tabindex="-1" aria-hidden="true"></iframe>
+  <iframe data-src="intro.html?embed=1&nobox=1" title="" tabindex="-1" aria-hidden="true"></iframe>
   <div class="inner">
     <div class="big">oxytocin</div>
     <div class="links">
@@ -152,53 +152,57 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 </footer>
 
 <script>
-const LANG = (new URLSearchParams(location.search).get('lang') || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+// English by default; Chinese only when chosen (?lang=zh or the toggle, which is remembered)
+const LANG = (new URLSearchParams(location.search).get('lang') || localStorage.getItem('oxytocinLang') || 'en') === 'zh' ? 'zh' : 'en';
 document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
 
 const COPY = {
   en: {
-    navValues: 'Values', navAbout: 'About', navContact: 'Contact',
-    eyebrow: 'What we make',
-    title: ['Make', 'things', 'that', 'feel', 'like', 'a', 'held', 'hand.'],
-    closing: 'That is the whole idea.',
-    a1: 'Oxytocin is an independent studio. We design and build products for people who could use a warmer moment in their day.',
-    a2: 'We care more about how something feels after you close it than how long it keeps you open.',
-    who: 'Who we are', facts: 'Oxytocin LLC<br>Wyoming, United States<br>Since 2025',
-    ask: 'Want to make something warm with us?', cta: 'Get in touch →',
+    navValues: 'Values', navAbout: 'About', navContact: 'Contact', langSwitch: '中文',
+    eyebrow: 'What we do',
+    title: ['We', 'make', 'software', 'that', 'feels', 'good', 'to', 'use.'],
+    closing: 'That’s it.',
+    a1: 'Oxytocin is a small independent studio. We design and build apps and digital products.',
+    a2: 'We would rather make something people are glad they used than something they can’t stop using.',
+    who: 'Company', facts: 'Oxytocin LLC<br>Wyoming, United States<br>Since 2025',
+    ask: 'Working on something? Let’s talk.', cta: 'Get in touch →',
   },
   zh: {
-    navValues: '价值观', navAbout: '关于', navContact: '联系',
+    navValues: '价值观', navAbout: '关于', navContact: '联系', langSwitch: 'EN',
     eyebrow: '我们做什么',
-    title: ['做', '让人', '觉得', '被', '牵着手', '的', '东西。'],
-    closing: '就是这么简单。',
-    a1: 'Oxytocin 是一家独立工作室，为那些需要一点温暖时刻的人，设计和制作产品。',
-    a2: '比起让你停留多久，我们更在乎你关掉以后心里是什么感觉。',
-    who: '我们是谁', facts: 'Oxytocin LLC<br>美国怀俄明州<br>始于 2025 年',
-    ask: '想和我们一起做点温暖的东西吗？', cta: '联系我们 →',
+    title: ['我们做', '用起来', '让人', '舒服的', '软件。'],
+    closing: '就这些。',
+    a1: 'Oxytocin 是一家独立的小工作室，设计和开发 App 与数字产品。',
+    a2: '我们想做让人用完觉得值得的东西，而不是让人停不下来的东西。',
+    who: '公司', facts: 'Oxytocin LLC<br>美国怀俄明州<br>始于 2025 年',
+    ask: '在做什么项目？聊聊吧。', cta: '联系我们 →',
   },
 }[LANG];
 
-// one chapter per value: label, the everyday thing it was first mistaken for, a headline and its description
+// one chapter per value: label, the everyday thing the detector first guesses, a headline and its description
 const CHAPTERS = {
   en: [
-    ['Warmth', 'warm_milk', 'Things should be warm to the touch.', 'Before anyone reads a word, they feel the temperature. We start every project there: the colour, the pace, the first sound, the way it says hello.'],
-    ['Closeness', 'held_hand', 'Close enough to hear each other breathe.', 'We design for the moments people share, not the hours they spend alone with a screen. The best feature is often someone else.'],
-    ['Gentleness', 'blanket', 'Nothing here is in a hurry.', 'No countdowns, no guilt, no red dots shouting for attention. If something matters, it can wait for you.'],
-    ['Wonder', 'first_snow', 'Like seeing snow for the first time.', 'Somewhere in everything we make there is a small surprise, left on purpose for whoever looks closely enough.'],
-    ['Safety', 'lamp_left_on', 'A light someone left on for you.', 'Your time and your attention are not ours to take. We ask for little, say plainly what we keep, and let you leave whenever you like.'],
-    ['Aliveness', 'heartbeat', 'A heartbeat you can feel.', 'Things that breathe a little: light that drifts, words that change, a world that is slightly different every time you come back.'],
+    ['Warmth', 'warm_milk', 'It should feel friendly.', 'Colour, pace, sound and wording set the tone before anyone reads the details. We get those right first.'],
+    ['Closeness', 'held_hand', 'It should bring people together.', 'We favour features that connect people with each other over ones that keep them alone with a screen.'],
+    ['Gentleness', 'blanket', 'It should never pressure you.', 'No countdowns, no guilt trips, no notifications fighting for attention. Anything important can wait.'],
+    ['Wonder', 'first_snow', 'It should have something to find.', 'We leave small details and surprises for people who look closely.'],
+    ['Safety', 'lamp_left_on', 'It should be safe to use.', 'We collect only what a feature needs, explain what we keep, and make it easy to leave.'],
+    ['Aliveness', 'heartbeat', 'It should feel alive.', 'Things move, change and respond, so it feels a little different each time you come back.'],
   ],
   zh: [
-    ['温暖', '热牛奶', '东西摸上去应该是暖的。', '人还没读到一个字，就先感到了温度。我们每个项目都从这里开始：颜色、节奏、第一个声音、打招呼的方式。'],
-    ['亲近', '牵着的手', '近到能听见彼此呼吸。', '我们为人与人一起的时刻设计，而不是一个人对着屏幕的那几个小时。最好的功能，常常是另一个人。'],
-    ['温柔', '毯子', '这里没有什么是急的。', '没有倒计时，没有愧疚感，没有吵着要你看的小红点。真正重要的东西，可以等你。'],
-    ['惊喜', '初雪', '像第一次看到雪。', '我们做的每样东西里，都故意藏着一个小惊喜，留给看得够仔细的人。'],
-    ['安心', '留着的灯', '有人给你留了一盏灯。', '你的时间和注意力，都不是我们的。我们要得少，说清楚留下了什么，你想走随时可以走。'],
-    ['生命感', '心跳', '能感觉到的心跳。', '会呼吸的东西：流动的光，会变的词，每次回来都有一点不一样的世界。'],
+    ['温暖', '热牛奶', '感觉要友好。', '颜色、节奏、声音和措辞，在用户读到细节之前就定下了基调。我们先把这些做对。'],
+    ['亲近', '牵着的手', '要把人连在一起。', '我们优先做让人和人产生联系的功能，而不是让人独自对着屏幕的功能。'],
+    ['温柔', '毯子', '不给人压力。', '没有倒计时，不制造愧疚，不用通知抢注意力。重要的事可以等。'],
+    ['惊喜', '初雪', '要有东西可以发现。', '我们会留一些小细节和小惊喜，给看得仔细的人。'],
+    ['安心', '留着的灯', '用起来要放心。', '只收集功能需要的数据，说明我们保存了什么，想离开也很容易。'],
+    ['生命感', '心跳', '要有活的感觉。', '东西会动、会变、会回应，所以每次回来都有一点不一样。'],
   ],
 }[LANG];
 
 document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = COPY[el.dataset.t]);
+// the intro inside the page speaks the page's language
+document.querySelectorAll('iframe[data-src]').forEach(f => f.src = `${f.dataset.src}&lang=${LANG}`);
+document.getElementById('lang').onclick = () => { localStorage.setItem('oxytocinLang', LANG === 'zh' ? 'en' : 'zh'); location.href = location.pathname + location.hash; };
 document.getElementById('title').innerHTML = COPY.title.map((w, i) => `<span class="mask"><span class="word" style="--i:${i}">${w}</span></span>`).join('');
 document.getElementById('chapters').innerHTML = CHAPTERS.map(([label, guess, head, desc], n) => `
   <article class="chapter" style="--n:${n}">
