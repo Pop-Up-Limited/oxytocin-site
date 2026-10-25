@@ -80,7 +80,7 @@ const T_MAIN = 1.3;            // earliest the oxytocin box may appear...
 const P_MAIN = 0.5;            // ...and only once loading is past halfway
 const T_MIN = 2.6;             // never finish sooner, even if the server is instant
 const SPAWN_GAP = [0.35, 0.85], LIFE = [1.6, 3.4], MAX_LIVE = 5;
-const MERGE_GAP = 0.13, MERGE_DUR = 0.38, T_RAMP = 0.35;
+const MERGE_GAP = 0.07, MERGE_DUR = 0.26, T_RAMP = 0.18;
 // oxytocin confidence: up to ~0.6 while loading, ~0.68 when every box has merged, then a quick run to 1.00
 const CONF_LOAD = 0.62, CONF_MERGED = 0.68;
 const easeOut = k => 1 - Math.pow(1 - k, 3);
