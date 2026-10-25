@@ -72,7 +72,7 @@ th { color: var(--mute); font-weight: 500; }
   <div class="sw"><i style="background:#1dff5e"></i>已捕获：绿</div>
 </div>
 <ul>
-<li>光的两个颜色每次打开都随机，色相相差 35° 到 130°，并且和上一次打开至少差 55°。</li>
+<li>光的两个颜色和动作每次打开网页都随机，色相相差 35° 到 130°，并且和上一次打开至少差 55°。点画面只是重播，颜色和动作不变；刷新网页才重新生成。</li>
 <li>光不能用绿色（色相 75° 到 170°），绿色只留给定格那一下。</li>
 <li>浅色模式下，光像颜料叠在纸上，两团重叠的地方颜色更深。深色模式下，光像发光体，重叠的地方更亮，但不能过曝成白色。</li>
 </ul>
@@ -117,7 +117,7 @@ th { color: var(--mute); font-weight: 500; }
 <div class="flow">
   <div class="st"><b>① 识别中</b>小框从词库里不断出现、消失、认错。oxytocin 框要等加载过半（进度 ≥ 0.5，且至少 1.3 秒）才出现，出现时一半字母已解码。<br><small>持续到服务器报完成</small></div>
   <div class="st"><b>② 合并</b>服务器报完成后，当前所有小框从离中心最近的开始，每隔 0.07 秒并进去一个，每个用 0.26 秒滑过去、撑大到和大框重合，然后消失。oxytocin 完整显示，每并进一个，置信度涨一点，全部并完时在 0.68 左右。<br><small>最多约 0.55 秒</small></div>
-  <div class="st"><b>③ 冲刺并定格</b>全部并完后，置信度在 0.18 秒内从 0.68 冲到 1.00。到 1.00 的那一刻整个画面冻住、框变绿，发出 <code>oxytocin-intro-finished</code>。<br><small>这时视线已经在左上角的数字上</small></div>
+  <div class="st"><b>③ 冲刺并捕获</b>全部并完后，置信度在 0.18 秒内从 0.68 冲到 1.00。到 1.00 的那一刻框变绿、只留 oxytocin 一个框，发出 <code>oxytocin-intro-finished</code>。之后两团光继续游动，速度在 1.2 秒内降到不到一半，绿框一直跟着它们。<code>oxytocin-intro-finished</code>。<br><small>这时视线已经在左上角的数字上</small></div>
 </div>
 <table>
 <tr><th>规则</th><th>数值</th></tr>
@@ -166,7 +166,7 @@ th { color: var(--mute); font-weight: 500; }
 <li>在光上加一颗颗看得见的噪点，或者给纸加质感、让纸动起来。</li>
 <li>把光做散，让两团光分开，或者变成很多团。</li>
 <li>词库里写抽象形容词。</li>
-<li>定格以后画面还在变。</li>
+<li>捕获以后再出现红框或别的小框。</li>
 </ul>
 </main>
 </body>
