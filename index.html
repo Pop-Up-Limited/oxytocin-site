@@ -152,8 +152,8 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 </footer>
 
 <script>
-// English by default; Chinese only when chosen (?lang=zh or the toggle, which is remembered)
-const LANG = (new URLSearchParams(location.search).get('lang') || localStorage.getItem('oxytocinLang') || 'en') === 'zh' ? 'zh' : 'en';
+// follows the browser language; the toggle overrides it and is remembered (?lang= wins for links)
+const LANG = (new URLSearchParams(location.search).get('lang') || localStorage.getItem('oxytocinLang') || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
 document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
 
 const COPY = {

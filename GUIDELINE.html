@@ -125,7 +125,7 @@ th { color: var(--mute); font-weight: 500; }
 <tr><td>最短时长</td><td>就算服务器瞬间完成，也至少播 2.6 秒才开始合并，保证能看到几个框；oxytocin 框出现后至少停 0.6 秒才开始合并。</td></tr>
 <tr><td>接口</td><td><code>OxytocinIntro.setProgress(0~1)</code> 报进度，<code>OxytocinIntro.done()</code> 报完成，<code>oxytocin-intro-finished</code> 事件通知动画结束。</td></tr>
 <tr><td>原型的模拟</td><td>默认用假服务器，随机 2.5 到 9 秒内完成。<code>?sim=slow</code> 固定 15 秒，<code>?sim=instant</code> 立刻完成（网页首屏用），<code>?sim=off</code> 关掉假服务器，只听真实接口。</td></tr>
-<tr><td>嵌入</td><td><code>?embed=1</code> 铺满所在的框；<code>?nobox=1</code> 只有流动的光，没有检测框，也不定格（网页页脚用）。<code>?main=values</code> 大框不写 oxytocin，每次随机落在六个价值观之一，且不和上一次重复（网页首屏用，品牌名已经在左上角）。</td></tr>
+<tr><td>嵌入</td><td><code>?embed=1</code> 铺满所在的框；<code>?nobox=1</code> 只有流动的光，没有检测框，也不定格（网页页脚用）。<code>?main=values</code> 加载时大框每 0.5 秒换一个价值观词闪动，开始合并时在 0.25 秒内解码成 oxytocin 并定格（网页首屏用）。</td></tr>
 </table>
 
 <h2>5 词库</h2>
