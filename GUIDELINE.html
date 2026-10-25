@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Oxytocin 动态标识规范</title>
+<style>
+:root { --ink: #24211c; --mute: #6b655b; --paper: #efebe4; --line: #d9d3c8; --red: #ff2d2d; --green: #1dff5e; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.65 -apple-system, "PingFang SC", system-ui, sans-serif; }
+main { max-width: 980px; margin: 0 auto; padding: 48px 28px 96px; }
+h1 { font-size: 30px; margin: 0 0 6px; letter-spacing: -.01em; }
+h2 { font-size: 19px; margin: 52px 0 12px; padding-top: 18px; border-top: 1px solid var(--line); }
+h3 { font-size: 15px; margin: 22px 0 6px; }
+p, li { max-width: 46em; }
+.lead { color: var(--mute); margin: 0 0 8px; }
+code, .mono { font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 13px; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 14px; }
+td, th { text-align: left; vertical-align: top; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th { color: var(--mute); font-weight: 500; }
+.phones { display: flex; gap: 22px; flex-wrap: wrap; margin: 14px 0; }
+.phone { width: 244px; }
+.phone .frame { width: 244px; height: 528px; border-radius: 30px; overflow: hidden; background: #111; position: relative; }
+.phone iframe { width: 390px; height: 844px; border: 0; transform: scale(.6256); transform-origin: 0 0; position: absolute; left: 0; top: 0; }
+.phone p { font-size: 13px; color: var(--mute); margin: 6px 2px 0; }
+.swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+.sw { width: 132px; font-size: 12px; }
+.sw i { display: block; height: 56px; border-radius: 8px; border: 1px solid var(--line); margin-bottom: 4px; }
+.box-demo { display: flex; gap: 36px; flex-wrap: wrap; padding: 30px 20px 18px; background: #e6e1d8; border-radius: 12px; font-family: "SF Mono", ui-monospace, Menlo, "PingFang SC", monospace; }
+.bx { position: relative; width: 150px; height: 96px; border: 1.5px solid var(--c); }
+.bx span { position: absolute; left: -1.5px; bottom: 100%; background: var(--c); color: #fff; font-size: 11px; line-height: 1.3; padding: 1px 4px; white-space: nowrap; }
+.bx.main { width: 220px; border-width: 2px; }
+.bx.main span { font-size: 15px; padding: 2px 6px; left: -2px; }
+.bx.ok span { color: #03140a; }
+.flow { display: flex; gap: 0; flex-wrap: wrap; margin: 14px 0; }
+.st { flex: 1 1 200px; background: #fff; border: 1px solid var(--line); padding: 14px 16px; margin: 0 -1px -1px 0; }
+.st b { display: block; margin-bottom: 4px; }
+.st small { color: var(--mute); }
+.no li::marker { content: "✗  "; color: var(--red); }
+.words { columns: 4 170px; font-size: 13px; }
+.words div { break-inside: avoid; }
+</style>
+</head>
+<body>
+<main>
+<h1>Oxytocin 动态标识规范</h1>
+<p class="lead">一个独立的作品：动态 logo 和加载动画。它和 Hiu 游戏没有任何关系。实现文件：同目录 <code>index.html</code>。2026-10-25 建立。</p>
+
+<h2>1 概念</h2>
+<p>一台冷冰冰的机器盯着一团说不清的光，想叫出它的名字。它先把这团光认成各种日常的暖东西，但都不确定，所以框是红的、在抖、会认错。最后这些猜测汇成一个答案 oxytocin，框变绿，画面像被拍下来一样定住。</p>
+<p>动人的地方在反差：冷的识别，对上暖的东西。所以框要尽量原始、尽量像真的模型输出，不做任何美化。</p>
+
+<div class="phones">
+  <div class="phone"><div class="frame"><iframe src="index.html?theme=light&lang=zh" loading="lazy"></iframe></div><p>浅色，中文（点画面重播）</p></div>
+  <div class="phone"><div class="frame"><iframe src="index.html?theme=dark&lang=en" loading="lazy"></iframe></div><p>深色，英文</p></div>
+  <div class="phone"><div class="frame"><iframe src="index.html?theme=light&lang=en&sim=slow" loading="lazy"></iframe></div><p>慢网络：服务器 15 秒才完成</p></div>
+</div>
+
+<h2>2 三层画面</h2>
+<table>
+<tr><th>层</th><th>内容</th><th>动不动</th></tr>
+<tr><td>背景：纸</td><td>纸色加大块的深浅斑驳、短纤维和细密的纸面颗粒。</td><td>完全静止，深浅模式各一种纸色。</td></tr>
+<tr><td>前景：光</td><td>两团大而圆的软光，中心离得很近、绕着彼此转，任何时候都叠在一起。边缘只轻轻起伏，不能散成雾。</td><td>一直流动，定格时停住。</td></tr>
+<tr><td>上层：检测框</td><td>见第 3 节。</td><td>按进度变化。</td></tr>
+</table>
+<h3>颜色</h3>
+<div class="swatches">
+  <div class="sw"><i style="background:#efebe4"></i>浅色纸 #EFEBE4</div>
+  <div class="sw"><i style="background:#16171c"></i>深色纸 #16171C</div>
+  <div class="sw"><i style="background:linear-gradient(90deg,#f07,#f80,#60f,#09f)"></i>光：每次随机</div>
+  <div class="sw"><i style="background:#ff2d2d"></i>识别中：红</div>
+  <div class="sw"><i style="background:#1dff5e"></i>已捕获：绿</div>
+</div>
+<ul>
+<li>光的两个颜色每次打开都随机，色相相差 35° 到 130°，并且和上一次打开至少差 55°。</li>
+<li>光不能用绿色（色相 75° 到 170°），绿色只留给定格那一下。</li>
+<li>浅色模式下，光像颜料叠在纸上，两团重叠的地方颜色更深。深色模式下，光像发光体，重叠的地方更亮，但不能过曝成白色。</li>
+</ul>
+<h3>颗粒</h3>
+<p>每个颗粒格占 <b>3 个屏幕点</b>，颗粒只会把颜色提亮、不会压暗，所以没有黑色噪点。颗粒只落在光上，纸上没有，这样前景和背景才分得开。颗粒每帧刷新，定格后跟着冻住。</p>
+
+<h2>3 检测框</h2>
+<div class="box-demo">
+  <div class="bx" style="--c:#ff2d2d"><span>热牛奶 0.41</span></div>
+  <div class="bx" style="--c:#ff5a36"><span>first_snow 0.33</span></div>
+  <div class="bx main" style="--c:#ff1f4b"><span>oxyt#q1n 0.58</span></div>
+  <div class="bx main ok" style="--c:#1dff5e"><span>oxytocin 1.00</span></div>
+</div>
+<table>
+<tr><th>项</th><th>规格</th></tr>
+<tr><td>框</td><td>直角，没有圆角，没有阴影。小框线宽 1.5，oxytocin 框线宽 2。</td></tr>
+<tr><td>标签</td><td>贴在框的左上角外侧，实心色块。文字是等宽字，小框 11、大框 15。格式固定为 <code>词 0.00</code>，不加编号、图标或任何装饰。</td></tr>
+<tr><td>识别中</td><td>每个框隔几帧换一种红（6 种），框在抖，标签白字。</td></tr>
+<tr><td>已捕获</td><td>只剩 oxytocin 一个框，变成绿色，标签深色字，数字是 1.00。</td></tr>
+<tr><td>英文词</td><td>小写加下划线，像模型的类别名：<code>lamp_left_on</code>。</td></tr>
+<tr><td>中文词</td><td>不超过 6 个字，写日常说法：留着的灯。</td></tr>
+</table>
+<h3>检测框的动态（要像真的模型，不能像动画）</h3>
+<ul>
+<li><b>出现：</b>标签先是乱码，0.25 秒内逐字拼出来。</li>
+<li><b>抖动：</b>位置和大小每帧都有小幅随机变化。</li>
+<li><b>掉线：</b>偶尔消失 2 到 6 帧，然后再出现。</li>
+<li><b>认错：</b>偶尔整个类别换成另一个词，置信度掉下去重新算。</li>
+<li><b>重复框：</b>约 30% 的框出现时带一个几乎重叠的同名框，0.1 到 0.3 秒后被删掉，模仿真实模型的去重（NMS）。</li>
+<li><b>寿命：</b>每个小框活 1.6 到 3.4 秒后丢失，新的从词库里补上。同时最多 5 个，摆放时尽量不和已有的框重叠。</li>
+</ul>
+
+<h2>4 进度：真实加载，没有进度条</h2>
+<p>这个动画本身就是加载画面，不另加进度条。进度体现在 oxytocin 框上：<b>字母随进度逐个解码</b>，<b>置信度随进度涨到 0.6 左右</b>，留着最后一段给合并后的冲刺。</p>
+<div class="flow">
+  <div class="st"><b>① 识别中</b>小框从词库里不断出现、消失、认错。oxytocin 框在 0.9 秒出现，标签大部分还是乱码。<br><small>持续到服务器报完成</small></div>
+  <div class="st"><b>② 合并</b>服务器报完成后，当前所有小框从离中心最近的开始，每隔 0.13 秒并进去一个，每个用 0.38 秒滑过去、撑大到和大框重合，然后消失。oxytocin 完整显示，每并进一个，置信度涨一点，全部并完时在 0.68 左右。<br><small>最多约 1 秒</small></div>
+  <div class="st"><b>③ 冲刺并定格</b>全部并完后，置信度在 0.35 秒内从 0.68 一路涨到 1.00，先快后慢。到 1.00 的那一刻整个画面冻住、框变绿，发出 <code>oxytocin-intro-finished</code>。<br><small>这时视线已经在左上角的数字上</small></div>
+</div>
+<table>
+<tr><th>规则</th><th>数值</th></tr>
+<tr><td>显示的进度</td><td>取两者中较大的：时间推进的假进度 <code>0.9 × (1 − e^(−t/6))</code>，以及服务器报来的进度。服务器报完成之前，最高到 0.95。</td></tr>
+<tr><td>只进不退</td><td>服务器报来更小的值时不往回走。显示值平滑地追向目标值。</td></tr>
+<tr><td>最短时长</td><td>就算服务器瞬间完成，也至少播 2.6 秒才开始合并，保证能看到几个框。</td></tr>
+<tr><td>接口</td><td><code>OxytocinIntro.setProgress(0~1)</code> 报进度，<code>OxytocinIntro.done()</code> 报完成，<code>oxytocin-intro-finished</code> 事件通知动画结束。</td></tr>
+<tr><td>原型的模拟</td><td>默认用假服务器，随机 2.5 到 9 秒内完成。<code>?sim=slow</code> 固定 15 秒，<code>?sim=off</code> 关掉假服务器，只听真实接口。</td></tr>
+</table>
+
+<h2>5 词库</h2>
+<p>小框的词从下面的词库里随机抽，一轮抽完才会重复。最后那个答案固定是 <b>oxytocin</b>，中英文都不翻译。</p>
+<p>以后加词的规则：</p>
+<ul>
+<li>写具体的东西或时刻，不写抽象形容词，比如不写"温暖""安心"。</li>
+<li>必须是暖的、日常的、谁都有过的；不写品牌、人名、节日。</li>
+<li>中英文成对加，意思一致；英文按模型类别名的写法。</li>
+</ul>
+<div class="words mono">
+<div>warm_milk 热牛奶</div><div>held_hand 牵着的手</div><div>blanket 毯子</div><div>first_snow 初雪</div>
+<div>lamp_left_on 留着的灯</div><div>heartbeat 心跳</div><div>sunday_morning 周日早上</div><div>sunned_sheets 晒过的床单</div>
+<div>cat_nap 猫在打盹</div><div>rain_on_window 窗上的雨</div><div>soup_on_stove 炉上的汤</div><div>old_sweater 旧毛衣</div>
+<div>shared_umbrella 同一把伞</div><div>birthday_candle 生日蜡烛</div><div>handwritten_letter 手写的信</div><div>fresh_bread 刚出炉的面包</div>
+<div>slow_song 慢歌</div><div>afternoon_nap 午觉</div><div>hug 拥抱</div><div>morning_light 早上的光</div>
+<div>cup_of_tea 一杯茶</div><div>sea_breeze 海风</div><div>porch_light 门口的灯</div><div>bubble_bath 泡泡浴</div>
+<div>clean_laundry 刚洗好的衣服</div><div>potted_plant 一盆绿植</div><div>someone_waiting 有人在等</div><div>footsteps_home 回家的脚步声</div>
+<div>campfire 篝火</div><div>pillow 枕头</div><div>music_box 八音盒</div><div>honey 蜂蜜</div>
+<div>kitten 小猫</div><div>slippers 拖鞋</div><div>stars 星星</div><div>hot_cocoa 热可可</div>
+<div>familiar_voice 熟悉的声音</div><div>window_seat 靠窗的位子</div><div>peach 桃子</div><div>night_light 小夜灯</div>
+</div>
+
+<h2>6 跟随手机设置</h2>
+<table>
+<tr><td>语言</td><td>手机语言是中文（任何 zh 开头的语言）时用中文词库，其余一律用英文。左下角的状态行也跟着换语言。</td></tr>
+<tr><td>深浅色</td><td>跟随手机的深浅色设置；动画播放中途切换，会立刻换纸色和光的混合方式。</td></tr>
+<tr><td>画幅</td><td>手机上铺满整个屏幕，避开顶部和底部的安全区。光以屏幕中心为准，大小按屏幕短边计算；屏幕越长，小框在上下方向分布得越开。</td></tr>
+</table>
+
+<h2>7 不要这样做</h2>
+<ul class="no">
+<li>闪白、快门声、相机闪光。定格就是直接停住。</li>
+<li>另加进度条、百分比或"加载中"之类的文字。</li>
+<li>给框加圆角、阴影、渐变，或者用好看的字体。</li>
+<li>定格之前出现任何绿色，包括光的颜色。</li>
+<li>纸上加颗粒，或者让纸动起来。</li>
+<li>把光做散，让两团光分开，或者变成很多团。</li>
+<li>词库里写抽象形容词。</li>
+<li>定格以后画面还在变。</li>
+</ul>
+</main>
+</body>
+</html>

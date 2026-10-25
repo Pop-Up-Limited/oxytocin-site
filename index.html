@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Oxytocin</title>
+<!-- Spec: GUIDELINE.html in this folder. -->
+<style>
+:root { --green: #1dff5e; --safe-top: env(safe-area-inset-top, 0px); --safe-bottom: env(safe-area-inset-bottom, 0px); }
+html, body { margin: 0; height: 100%; background: #0d0d0f; font-family: -apple-system, system-ui, sans-serif; }
+body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+/* phone: the intro fills the screen; desktop: shown inside a phone-sized frame */
+#stage { position: fixed; inset: 0; overflow: hidden; cursor: pointer; }
+@media (min-width: 600px) and (min-height: 700px) {
+  #stage { position: relative; inset: auto; width: 390px; height: 844px; max-height: calc(100vh - 70px); border-radius: 44px; }
+}
+#gl { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#boxes { position: absolute; inset: 0; pointer-events: none; font-family: "SF Mono", ui-monospace, Menlo, "PingFang SC", monospace; }
+.box { position: absolute; box-sizing: border-box; border: 1.5px solid var(--c); }
+.box .tag { position: absolute; left: -1.5px; bottom: 100%; background: var(--c); color: #fff;
+  font-size: 11px; line-height: 1.3; padding: 1px 4px; white-space: nowrap; }
+.box.main { border-width: 2px; }
+.box.main .tag { font-size: 15px; padding: 2px 6px; left: -2px; }
+.box.ok .tag { color: #03140a; }
+.box.off { display: none; }
+#hud { position: absolute; left: 14px; bottom: calc(var(--safe-bottom) + 10px); font: 10px/1.2 "SF Mono", ui-monospace, Menlo, "PingFang SC", monospace; letter-spacing: .04em; }
+#probe { position: absolute; top: 0; height: var(--safe-top); width: 0; }
+#replay { font: 13px -apple-system, system-ui, sans-serif; color: #ddd; background: #222; border: 0; border-radius: 8px; padding: 8px 14px; cursor: pointer; display: none; }
+@media (min-width: 600px) and (min-height: 700px) { #replay { display: block; } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="gl"></canvas>
+  <div id="boxes"></div>
+  <div id="hud"></div>
+  <div id="probe"></div>
+</div>
+<button id="replay"></button>
+
+<script>
+// ---------- settings that follow the phone ----------
+const params = new URLSearchParams(location.search);
+const LANG = (params.get('lang') || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
+const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+const isDark = () => params.get('theme') ? params.get('theme') === 'dark' : darkQuery.matches;
+document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+
+// Word pool: everyday warm things the detector "mistakes" the light for. [en, zh]
+const POOL = [
+  ['warm_milk', '热牛奶'], ['held_hand', '牵着的手'], ['blanket', '毯子'], ['first_snow', '初雪'],
+  ['lamp_left_on', '留着的灯'], ['heartbeat', '心跳'], ['sunday_morning', '周日早上'], ['sunned_sheets', '晒过的床单'],
+  ['cat_nap', '猫在打盹'], ['rain_on_window', '窗上的雨'], ['soup_on_stove', '炉上的汤'], ['old_sweater', '旧毛衣'],
+  ['shared_umbrella', '同一把伞'], ['birthday_candle', '生日蜡烛'], ['handwritten_letter', '手写的信'], ['fresh_bread', '刚出炉的面包'],
+  ['slow_song', '慢歌'], ['afternoon_nap', '午觉'], ['hug', '拥抱'], ['morning_light', '早上的光'],
+  ['cup_of_tea', '一杯茶'], ['sea_breeze', '海风'], ['porch_light', '门口的灯'], ['bubble_bath', '泡泡浴'],
+  ['clean_laundry', '刚洗好的衣服'], ['potted_plant', '一盆绿植'], ['someone_waiting', '有人在等'], ['footsteps_home', '回家的脚步声'],
+  ['campfire', '篝火'], ['pillow', '枕头'], ['music_box', '八音盒'], ['honey', '蜂蜜'],
+  ['kitten', '小猫'], ['slippers', '拖鞋'], ['stars', '星星'], ['hot_cocoa', '热可可'],
+  ['familiar_voice', '熟悉的声音'], ['window_seat', '靠窗的位子'], ['peach', '桃子'], ['night_light', '小夜灯'],
+];
+const COPY = {
+  en: { main: 'oxytocin', frame: 'frame', objects: 'objects', captured: 'captured', replay: 'Replay' },
+  zh: { main: 'oxytocin', frame: '帧', objects: '目标', captured: '已捕获', replay: '重播' },
+}[LANG];
+const word = i => POOL[i][LANG === 'zh' ? 1 : 0];
+
+// ---------- timing (seconds) ----------
+const T_FADE = 0.8;            // light fades in
+const T_MAIN = 0.9;            // oxytocin box appears, still undecoded
+const T_MIN = 2.6;             // never finish sooner, even if the server is instant
+const SPAWN_GAP = [0.35, 0.85], LIFE = [1.6, 3.4], MAX_LIVE = 5;
+const MERGE_GAP = 0.13, MERGE_DUR = 0.38, T_RAMP = 0.35;
+// oxytocin confidence: up to ~0.6 while loading, ~0.68 when every box has merged, then a quick run to 1.00
+const CONF_LOAD = 0.62, CONF_MERGED = 0.68;
+const easeOut = k => 1 - Math.pow(1 - k, 3);
+const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+const rnd = (a, b) => a + Math.random() * (b - a);
+
+const GRAIN_PX = 3;
+const PAPER = { light: [0.937, 0.922, 0.894], dark: [0.086, 0.090, 0.110] };
+const REDS = ['#ff2d2d', '#ff1f4b', '#ff5a36', '#e8121f', '#ff3d6e', '#ff7a2e'];
+const GLYPHS = LANG === 'zh' ? '的一是在不了有和人这中大为上个国我以要他时来用们生到作地于出就分对成会可主发年动' : 'abcdefghijklmnopqrstuvwxyz_0123456789#%&';
+
+// ---------- WebGL ----------
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { preserveDrawingBuffer: true });
+
+const VS = `attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}`;
+const FS = `
+precision highp float;
+uniform vec2 u_res; uniform float u_t, u_dpr; uniform vec4 u_ph;
+uniform vec3 u_paper, u_a, u_b; uniform float u_dark, u_gt, u_in, u_grain;
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);
+  return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float s=0.,a=.5;for(int i=0;i<4;i++){s+=a*n(p);p=p*2.03+17.1;a*=.5;}return s;}
+
+// background: still paper (mottling, fibres, tooth); never moves
+vec3 paper(vec2 cp){
+  float mott=fbm(cp/170.);
+  vec2 r1=mat2(.8,-.6,.6,.8)*cp, r2=mat2(.5,.87,-.87,.5)*cp;
+  float fib=fbm(r1*vec2(1./22.,1./4.))*.5+fbm(r2*vec2(1./26.,1./4.5))*.5;
+  float tooth=h(floor(cp));
+  float k=1.+(mott-.5)*.06+(fib-.5)*.022;
+  return u_paper*k+(tooth-.5)*.03;
+}
+
+void main(){
+  float S=min(u_res.x,u_res.y);
+  vec2 p=(gl_FragCoord.xy-.5*u_res)/S*2.;
+  vec2 cp=gl_FragCoord.xy/u_dpr;
+  float t=u_t;
+  // foreground: two round masses orbiting each other, always overlapping
+  vec2 m=.05*vec2(sin(t*.31+u_ph.z),cos(t*.37+u_ph.w));
+  float a=t*.5+u_ph.x, R=.17+.03*sin(t*.7+u_ph.y);
+  vec2 c1=m+R*vec2(cos(a),sin(a)), c2=m-R*vec2(cos(a),sin(a));
+  vec2 q=p+(vec2(fbm(p*1.3+vec2(0.,t*.15)),fbm(p*1.3+vec2(5.2,-t*.13)))-.5)*.14;
+  vec2 d1=q-c1, d2=q-c2;
+  float r1=.70*(1.+.05*sin(atan(d1.y,d1.x)*2.+t*.8));
+  float r2=.64*(1.+.05*sin(atan(d2.y,d2.x)*2.-t*.7));
+  float b1=clamp((1.-smoothstep(.28,1.,length(d1)/r1))*u_in,0.,1.);
+  float b2=clamp((1.-smoothstep(.28,1.,length(d2)/r2))*u_in,0.,1.);
+
+  vec3 bg=paper(cp), col;
+  if(u_dark>.5){
+    vec3 g=u_a*b1*.8+u_b*b2*.8+(u_a+u_b)*b1*b2*.12;
+    col=bg+(1.-bg)*(1.-exp(-g*1.6));
+  } else {
+    col=bg*mix(vec3(1.),u_a,b1)*mix(vec3(1.),u_b,b2);
+  }
+  // frosted grain lives on the light only, 3 css px per cell
+  float mask=clamp(max(b1,b2)*1.4,0.,1.);
+  vec2 gp=floor(gl_FragCoord.xy/u_grain)+fract(u_gt*7.13)*vec2(311.,173.);
+  // grain only lightens: no dark specks
+  float gr=h(gp);
+  col=mix(col,vec3(1.),gr*gr*.22*mask);
+  gl_FragColor=vec4(clamp(col,0.,1.),1.);
+}`;
+
+function sh(type, src) {
+  const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+const prog = gl.createProgram();
+gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS));
+gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS));
+gl.linkProgram(prog); gl.useProgram(prog);
+gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+const aLoc = gl.getAttribLocation(prog, 'a');
+gl.enableVertexAttribArray(aLoc); gl.vertexAttribPointer(aLoc, 2, gl.FLOAT, false, 0, 0);
+const U = {};
+['u_res', 'u_t', 'u_dpr', 'u_ph', 'u_paper', 'u_a', 'u_b', 'u_dark', 'u_gt', 'u_in', 'u_grain'].forEach(k => U[k] = gl.getUniformLocation(prog, k));
+
+const stage = document.getElementById('stage');
+let dpr = 1, W = 0, H = 0, safeTop = 0;
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = stage.getBoundingClientRect();
+  W = r.width; H = r.height;
+  safeTop = document.getElementById('probe').getBoundingClientRect().height;
+  canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+}
+
+// ---------- palette: the light changes every launch, the paper follows light/dark ----------
+function hsl(h, s, l) {
+  h = ((h % 360) + 360) % 360; s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => { const k = (n + h / 30) % 12; return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)); };
+  return [f(0), f(8), f(4)];
+}
+// green is saved for the capture moment
+const isGreen = h => { h = ((h % 360) + 360) % 360; return h > 75 && h < 170; };
+function pickHues() {
+  const last = parseFloat(localStorage.getItem('oxytocinHue'));
+  let h1, h2;
+  do { h1 = Math.random() * 360; } while (isGreen(h1) || (!isNaN(last) && Math.abs(((h1 - last + 540) % 360) - 180) < 55));
+  localStorage.setItem('oxytocinHue', h1);
+  do { h2 = h1 + (Math.random() < .5 ? -1 : 1) * (35 + Math.random() * 95); } while (isGreen(h2));
+  return [h1, h2];
+}
+function applyTheme() {
+  const dark = isDark();
+  const [h1, h2] = run.hues;
+  gl.uniform1f(U.u_dark, dark ? 1 : 0);
+  gl.uniform3fv(U.u_paper, dark ? PAPER.dark : PAPER.light);
+  gl.uniform3fv(U.u_a, dark ? hsl(h1, 85, 55) : hsl(h1, 95, 60));
+  gl.uniform3fv(U.u_b, dark ? hsl(h2, 80, 58) : hsl(h2, 92, 62));
+  document.getElementById('hud').style.color = dark ? '#d8d8d8' : '#3a3630';
+}
+
+// blob centres, mirrored from the shader so the boxes ride the light
+function centres(t, ph) {
+  const m = [.05 * Math.sin(t * .31 + ph[2]), .05 * Math.cos(t * .37 + ph[3])];
+  const a = t * .5 + ph[0], R = .17 + .03 * Math.sin(t * .7 + ph[1]);
+  const c1 = [m[0] + R * Math.cos(a), m[1] + R * Math.sin(a)];
+  const c2 = [m[0] - R * Math.cos(a), m[1] - R * Math.sin(a)];
+  return [c1, c2, m, [m[0] * .35, m[1] * .35]];
+}
+
+// ---------- detection boxes ----------
+// units: half the short side of the screen = 1, y up (same as the shader)
+const boxesEl = document.getElementById('boxes');
+const hud = document.getElementById('hud');
+let run;
+
+function makeBox(label, main) {
+  const el = document.createElement('div');
+  el.className = 'box off' + (main ? ' main' : '');
+  const tag = document.createElement('div'); tag.className = 'tag'; el.appendChild(tag);
+  boxesEl.appendChild(el);
+  return { el, tag, label, main, pos: null, conf: rnd(.25, .6), color: REDS[0], drop: 0,
+           labelAt: 0, mergeAt: null, gone: false, ghostUntil: null };
+}
+function kill(b) { b.gone = true; b.el.remove(); }
+
+const LATIN = 'abcdefghijklmnopqrstuvwxyz_0123456789#%&';
+function scramble(label, k, glyphs = GLYPHS) {
+  const chars = [...label], n = Math.floor(chars.length * k);
+  return chars.map((c, i) => i < n ? c : glyphs[Math.floor(Math.random() * glyphs.length)]).join('');
+}
+
+const tallness = () => H / W > 1.3 ? 1.7 : 1;
+function rectOf(b, cs) {
+  const a = cs[b.anchor];
+  return [a[0] + b.off[0], a[1] + b.off[1], b.size[0], b.size[1]];
+}
+function iou(p, q) {
+  const ix = Math.max(0, Math.min(p[0] + p[2] / 2, q[0] + q[2] / 2) - Math.max(p[0] - p[2] / 2, q[0] - q[2] / 2));
+  const iy = Math.max(0, Math.min(p[1] + p[3] / 2, q[1] + q[3] / 2) - Math.max(p[1] - p[3] / 2, q[1] - q[3] / 2));
+  const i = ix * iy; return i / (p[2] * p[3] + q[2] * q[3] - i);
+}
+
+// draw the next word from the pool without repeats until it runs out
+function nextWord() {
+  if (!run.deck.length) run.deck = POOL.map((_, i) => i).sort(() => Math.random() - .5);
+  return word(run.deck.pop());
+}
+
+function spawn(e, cs) {
+  const live = run.boxes.filter(b => !b.gone && !b.ghostUntil);
+  const tall = tallness();
+  let best = null;
+  for (let tries = 0; tries < 10; tries++) {
+    const ang = rnd(0, 6.283), rad = rnd(.12, .72);
+    const cand = { anchor: Math.floor(rnd(0, 3)), off: [Math.cos(ang) * rad, Math.sin(ang) * rad * tall], size: [rnd(.24, .42), rnd(.2, .38)] };
+    const r = rectOf(cand, cs);
+    const worst = Math.max(0, ...live.map(b => iou(r, rectOf(b, cs))));
+    if (!best || worst < best.worst) best = { cand, worst };
+    if (worst < .15) break;
+  }
+  const b = Object.assign(makeBox(nextWord(), false), best.cand, { born: e, dieAt: e + rnd(...LIFE), labelAt: e });
+  run.boxes.push(b);
+  // sometimes the detector fires twice on the same thing; the duplicate is suppressed (NMS)
+  if (Math.random() < .3) {
+    const g = Object.assign(makeBox(b.label, false), { anchor: b.anchor, off: [b.off[0] + rnd(-.05, .05), b.off[1] + rnd(-.05, .05)],
+      size: [b.size[0] * rnd(.9, 1.15), b.size[1] * rnd(.9, 1.15)], born: e, dieAt: e + 9, labelAt: e - 1, ghostUntil: e + rnd(.12, .3) });
+    g.conf = b.conf * rnd(.6, .9);
+    run.boxes.push(g);
+  }
+}
+
+function place(b, rect, frozen) {
+  const S = Math.min(W, H), [x, y, w, h] = rect;
+  let L = W / 2 + (x - w / 2) * S / 2, R = W / 2 + (x + w / 2) * S / 2;
+  let T = H / 2 - (y + h / 2) * S / 2, B = H / 2 - (y - h / 2) * S / 2;
+  L = Math.max(8, L); R = Math.min(W - 8, R); T = Math.max(safeTop + 26, T); B = Math.min(H - 40, B);
+  if (R - L < 20 || B - T < 20) { b.el.classList.add('off'); return; }
+  const s = b.el.style;
+  s.left = L + 'px'; s.top = T + 'px'; s.width = (R - L) + 'px'; s.height = (B - T) + 'px';
+  s.setProperty('--c', frozen ? 'var(--green)' : b.color);
+  b.el.classList.toggle('ok', frozen);
+}
+
+function updateBox(b, e, cs, frozen) {
+  if (b.gone || e < b.born) return;
+  const main = run.main;
+  const jit = frozen ? 0 : b.main ? .035 * (1 - run.p * .8) : .03;
+  const base = rectOf(b, cs);
+  const target = [base[0] + rnd(-.5, .5) * jit, base[1] + rnd(-.5, .5) * jit,
+                  base[2] * (1 + rnd(-.5, .5) * jit * 3), base[3] * (1 + rnd(-.5, .5) * jit * 3)];
+  if (!b.pos) b.pos = target.slice();
+  const k = frozen ? 1 : .35;
+  for (let i = 0; i < 4; i++) b.pos[i] += (target[i] - b.pos[i]) * k;
+
+  let rect = b.pos;
+  const merging = !b.main && b.mergeAt !== null && e >= b.mergeAt;
+  if (merging) {
+    const m = ease(Math.min(1, (e - b.mergeAt) / MERGE_DUR));
+    rect = b.pos.map((v, i) => v + (main.pos[i] - v) * m);
+    if (m >= 1) { kill(b); run.merged++; return; }
+  }
+
+  if (!frozen && !b.main && !merging) {
+    if (b.ghostUntil && e >= b.ghostUntil) { kill(b); return; }
+    if (run.phase === 'detect' && e >= b.dieAt) { kill(b); return; }
+    // lost for a few frames now and then
+    if (b.drop <= 0 && e - b.born > .3 && Math.random() < .025) b.drop = 2 + Math.floor(rnd(0, 5));
+    // class flicker: the detector changes its mind about what this is
+    if (!b.ghostUntil && e - b.labelAt > .6 && Math.random() < .012) { b.label = nextWord(); b.labelAt = e; b.conf = rnd(.22, .45); }
+  }
+  if (b.drop > 0 && !frozen && !merging) { b.drop--; b.el.classList.add('off'); return; }
+  b.drop = 0;
+  b.el.classList.remove('off');
+
+  if (!frozen) {
+    if (b.main && run.phase === 'detect') b.conf = run.p * CONF_LOAD + rnd(-.02, .02);
+    else if (b.main && e < run.allMergedAt) b.conf = run.mergeConf + (CONF_MERGED - run.mergeConf) * (run.merged / Math.max(1, run.mergeTotal)) + rnd(-.01, .01);
+    else if (b.main) b.conf = CONF_MERGED + (1 - CONF_MERGED) * easeOut(Math.min(1, (e - run.allMergedAt) / T_RAMP));
+    else b.conf = Math.min(.74, Math.max(.21, b.conf + rnd(-.045, .045)));
+    if (Math.random() < .18) b.color = REDS[Math.floor(rnd(0, REDS.length))];
+  }
+  place(b, rect, frozen);
+  // oxytocin decodes letter by letter as the real progress grows; small labels decode on arrival
+  const name = frozen ? b.label : b.main ? (run.phase === 'merge' ? b.label : scramble(b.label, run.p, LATIN)) : (e - b.labelAt < .25 ? scramble(b.label, (e - b.labelAt) / .25) : b.label);
+  b.tag.textContent = `${name} ${(frozen && b.main ? 1 : Math.max(0, b.conf)).toFixed(2)}`;
+}
+
+// ---------- progress: time creep + whatever the server reports ----------
+// The host calls OxytocinIntro.setProgress(0..1) and OxytocinIntro.done(); the merge only starts after done().
+function targetProgress(e) {
+  const creep = .9 * (1 - Math.exp(-e / 6));
+  return run.done ? 1 : Math.min(.95, Math.max(creep, run.serverP));
+}
+
+function beginMerge(e, cs) {
+  run.phase = 'merge';
+  const live = run.boxes.filter(b => !b.main && !b.gone && !b.ghostUntil && e >= b.born);
+  const c = run.main.pos;
+  live.sort((p, q) => Math.hypot(p.pos[0] - c[0], p.pos[1] - c[1]) - Math.hypot(q.pos[0] - c[0], q.pos[1] - c[1]));
+  live.forEach((b, i) => { b.mergeAt = e + i * MERGE_GAP; b.drop = 0; });
+  run.boxes.filter(b => b.ghostUntil && !b.gone).forEach(kill);
+  run.mergeTotal = live.length;
+  run.mergeConf = run.main.conf;
+  run.allMergedAt = e + (live.length ? (live.length - 1) * MERGE_GAP + MERGE_DUR : 0);
+  run.shotAt = run.allMergedAt + T_RAMP;
+}
+
+// ---------- run ----------
+function start() {
+  cancelAnimationFrame(run?.raf);
+  clearTimeout(run?.sim);
+  boxesEl.innerHTML = '';
+  resize();
+  const ph = [0, 0, 0, 0].map(() => Math.random() * 6.283);
+  run = { boxes: [], deck: [], ph, hues: pickHues(), t0: Math.random() * 60, startAt: null, frame: 0,
+          phase: 'detect', p: 0, serverP: 0, done: false, merged: 0, mergeTotal: 0, nextSpawn: .45 };
+  run.main = Object.assign(makeBox(COPY.main, true), { anchor: 3, off: [0, 0], size: [1.5, 1.42 * (tallness() > 1 ? 1.2 : 1)], born: T_MAIN });
+  run.boxes.push(run.main);
+  gl.uniform4fv(U.u_ph, ph);
+  applyTheme();
+  if (params.get('sim') !== 'off') simulateServer();
+  run.raf = requestAnimationFrame(tick);
+}
+
+function draw(t, e) {
+  gl.uniform2f(U.u_res, canvas.width, canvas.height);
+  gl.uniform1f(U.u_t, t);
+  gl.uniform1f(U.u_dpr, dpr);
+  gl.uniform1f(U.u_gt, e);
+  gl.uniform1f(U.u_in, Math.min(1, e / T_FADE));
+  gl.uniform1f(U.u_grain, GRAIN_PX * dpr);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+}
+
+const frameNo = r => String(r.frame).padStart(4, '0');
+function tick(now) {
+  const r = run;
+  if (r.phase === 'frozen') return;
+  if (r.startAt === null) r.startAt = now;
+  const e = (now - r.startAt) / 1000;
+  const t = r.t0 + e;
+  const cs = centres(t, r.ph);
+  draw(t, e);
+  r.frame++;
+
+  // the shown progress only moves forward, and eases toward its target
+  const goal = targetProgress(e);
+  r.p = Math.max(r.p, r.p + (goal - r.p) * (r.phase === 'merge' ? .12 : .05));
+
+  if (r.phase === 'detect') {
+    if (e >= r.nextSpawn && r.boxes.filter(b => !b.main && !b.gone && !b.ghostUntil).length < MAX_LIVE) {
+      spawn(e, cs); r.nextSpawn = e + rnd(...SPAWN_GAP);
+    }
+    if (r.done && e >= T_MIN && r.main.pos) beginMerge(e, cs);
+  }
+  if (r.phase === 'merge' && e >= r.shotAt) {
+    // the capture: everything stops, only the oxytocin box stays, green at 1.00
+    r.phase = 'frozen';
+    r.boxes.filter(b => !b.main && !b.gone).forEach(kill);
+    updateBox(r.main, e, cs, true);
+    r.frozenT = t; r.frozenE = e;
+    hud.textContent = `det v1  ${COPY.frame} ${frameNo(r)}  ${COPY.captured}`;
+    window.dispatchEvent(new CustomEvent('oxytocin-intro-finished'));
+    return;
+  }
+  updateBox(r.main, e, cs, false);
+  r.boxes.forEach(b => { if (!b.main) updateBox(b, e, cs, false); });
+  r.boxes = r.boxes.filter(b => !b.gone);
+  const live = r.boxes.filter(b => e >= b.born).length;
+  hud.textContent = `det v1  ${COPY.frame} ${frameNo(r)}  ${COPY.objects} ${live}`;
+  r.raf = requestAnimationFrame(tick);
+}
+
+// ---------- API ----------
+window.OxytocinIntro = {
+  setProgress(p) { if (run && !run.done) run.serverP = Math.max(run.serverP, Math.min(1, +p || 0)); },
+  done() { if (run) run.done = true; },
+  replay: start,
+};
+
+// prototype only: a fake server that reports uneven progress and finishes after 2.5 to 9 s
+function simulateServer() {
+  const total = params.get('sim') === 'slow' ? 15 : rnd(2.5, 9);
+  let p = 0;
+  const step = () => {
+    p = Math.min(1, p + rnd(.05, .3));
+    if (p >= 1) { OxytocinIntro.setProgress(1); OxytocinIntro.done(); return; }
+    OxytocinIntro.setProgress(p);
+    run.sim = setTimeout(step, rnd(.2, .5) * total * 1000 / 3);
+  };
+  run.sim = setTimeout(step, rnd(.3, .8) * 1000);
+}
+
+// light/dark follows the phone live; a frozen frame is redrawn in the new mode
+darkQuery.addEventListener('change', () => { applyTheme(); if (run.phase === 'frozen') draw(run.frozenT, run.frozenE); });
+document.getElementById('replay').textContent = COPY.replay;
+stage.addEventListener('click', start);
+document.getElementById('replay').addEventListener('click', start);
+window.addEventListener('resize', start);
+start();
+</script>
+</body>
+</html>
