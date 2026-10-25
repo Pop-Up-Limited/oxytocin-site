@@ -145,7 +145,7 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
     <div class="big" data-t="brand"></div>
     <div class="links">
       <a href="#values" data-t="navValues"></a><a href="#about" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a>
-      <small>© 2026 Oxytocin LLC</small>
+      <small>© 2026 Oxytocin</small>
     </div>
   </div>
 </footer>
@@ -158,41 +158,41 @@ document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
 const COPY = {
   en: {
     brand: 'oxytocin', navValues: 'Values', navAbout: 'About', navContact: 'Contact', langSwitch: '中文',
-    eyebrow: 'What we do',
-    title: ['We', 'make', 'software', 'that', 'feels', 'good', 'to', 'use.'],
-    a1: 'Oxytocin is a small independent studio. We design and build apps and digital products.',
-    a2: 'We would rather make something people are glad they used than something they can’t stop using.',
-    who: 'Company', facts: 'Oxytocin LLC<br>Wyoming, United States<br>Since 2025',
-    ask: 'Working on something? Let’s talk.', cta: 'Get in touch →',
+    eyebrow: 'Oxytocin',
+    title: ['We', 'make', 'happiness.'],
+    a1: 'Oxytocin is an independent game studio exploring new forms of play.',
+    a2: 'We make cozy games: places to feel warm, to look after yourself, and to see the world kindly.',
+    who: 'Studio', facts: 'Oxytocin<br>Independent game studio<br>Since 2025',
+    ask: 'For collaborations and press.', cta: 'Contact →',
   },
   zh: {
     brand: '安妥心', navValues: '价值观', navAbout: '关于', navContact: '联系', langSwitch: 'EN',
-    eyebrow: '我们做什么',
-    title: ['我们做', '用起来', '让人', '舒服的', '软件。'],
-    a1: '安妥心（Oxytocin）是一家独立的小工作室，设计和开发 App 与数字产品。',
-    a2: '我们想做让人用完觉得值得的东西，而不是让人停不下来的东西。',
-    who: '公司', facts: 'Oxytocin LLC<br>美国怀俄明州<br>始于 2025 年',
-    ask: '在做什么项目？聊聊吧。', cta: '联系我们 →',
+    eyebrow: '安妥心',
+    title: ['我们', '制造', '幸福。'],
+    a1: '安妥心（Oxytocin）是一家独立游戏工作室，探索新的游戏形式。',
+    a2: '我们做 cozy 游戏：让人感到温暖、照顾好自己、善意地看待世界的地方。',
+    who: '工作室', facts: 'Oxytocin<br>独立游戏工作室<br>始于 2025 年',
+    ask: '合作与媒体。', cta: '联系 →',
   },
 }[LANG];
 
 // one chapter per value: label, the everyday thing the detector first guesses, a headline and its description
 const CHAPTERS = {
   en: [
-    ['Warmth', 'warm_milk', 'It should feel friendly.', 'Colour, pace, sound and wording set the tone before anyone reads the details. We get those right first.'],
-    ['Closeness', 'held_hand', 'It should bring people together.', 'We favour features that connect people with each other over ones that keep them alone with a screen.'],
-    ['Gentleness', 'blanket', 'It should never pressure you.', 'No countdowns, no guilt trips, no notifications fighting for attention. Anything important can wait.'],
-    ['Wonder', 'first_snow', 'It should have something to find.', 'We leave small details and surprises for people who look closely.'],
-    ['Safety', 'lamp_left_on', 'It should be safe to use.', 'We collect only what a feature needs, explain what we keep, and make it easy to leave.'],
-    ['Aliveness', 'heartbeat', 'It should feel alive.', 'Things move, change and respond, so it feels a little different each time you come back.'],
+    ['Warmth', 'warm_milk', 'Warm to the touch.', 'Every piece begins with how it feels: the light, the pace, the first sound.'],
+    ['Closeness', 'held_hand', 'Closer to each other.', 'Worlds meant to be shared, and kind to the people who meet in them.'],
+    ['Gentleness', 'blanket', 'Slowly, with care.', 'Quiet places, made with patience.'],
+    ['Wonder', 'first_snow', 'Something left to find.', 'Small surprises for those who look closely.'],
+    ['Safety', 'lamp_left_on', 'A place to rest.', 'A kind world, where people can look after themselves.'],
+    ['Aliveness', 'heartbeat', 'Always a little alive.', 'Light that drifts and worlds that change, a little different each time you return.'],
   ],
   zh: [
-    ['温暖', '热牛奶', '感觉要友好。', '颜色、节奏、声音和措辞，在用户读到细节之前就定下了基调。我们先把这些做对。'],
-    ['亲近', '牵着的手', '要把人连在一起。', '我们优先做让人和人产生联系的功能，而不是让人独自对着屏幕的功能。'],
-    ['温柔', '毯子', '不给人压力。', '没有倒计时，不制造愧疚，不用通知抢注意力。重要的事可以等。'],
-    ['惊喜', '初雪', '要有东西可以发现。', '我们会留一些小细节和小惊喜，给看得仔细的人。'],
-    ['安心', '留着的灯', '用起来要放心。', '只收集功能需要的数据，说明我们保存了什么，想离开也很容易。'],
-    ['生命感', '心跳', '要有活的感觉。', '东西会动、会变、会回应，所以每次回来都有一点不一样。'],
+    ['温暖', '热牛奶', '触感是暖的。', '每件作品都从感觉开始：光线、节奏、第一个声音。'],
+    ['亲近', '牵着的手', '让人更靠近彼此。', '为分享而做的世界，也善待在其中相遇的人。'],
+    ['温柔', '毯子', '慢慢地，细细地。', '安静的地方，用耐心做成。'],
+    ['惊喜', '初雪', '总有东西可以发现。', '留给看得仔细的人的小惊喜。'],
+    ['安心', '留着的灯', '一个可以休息的地方。', '一个善意的世界，人们可以在这里照顾自己。'],
+    ['生命感', '心跳', '一直在轻轻地动。', '流动的光，变化的世界，每次回来都有一点不同。'],
   ],
 }[LANG];
 
