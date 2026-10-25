@@ -1,0 +1,14 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "oxytocin",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-e",
+        "const h=require('http'),f=require('fs'),D='/Volumes/Extension Disk/Oxytocin-Intro/';h.createServer((q,r)=>{let n=decodeURIComponent(q.url.split('?')[0]).replace(/^\\/+/,'')||'index.html';if(n.includes('..'))n='index.html';f.readFile(D+n,(e,b)=>{r.writeHead(e?404:200,{'content-type':'text/html; charset=utf-8'});r.end(b||'')})}).listen(process.env.PORT||5199)"
+      ],
+      "port": 5199
+    }
+  ]
+}

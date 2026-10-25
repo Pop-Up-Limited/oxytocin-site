@@ -44,16 +44,16 @@ th { color: var(--mute); font-weight: 500; }
 <body>
 <main>
 <h1>Oxytocin 动态标识规范</h1>
-<p class="lead">一个独立的作品：动态 logo 和加载动画。它和 Hiu 游戏没有任何关系。实现文件：同目录 <code>index.html</code>。2026-10-25 建立。</p>
+<p class="lead">一个独立的作品：动态 logo 和加载动画。它和 Hiu 游戏没有任何关系。实现文件：同目录 <code>intro.html</code>。2026-10-25 建立。</p>
 
 <h2>1 概念</h2>
 <p>一台冷冰冰的机器盯着一团说不清的光，想叫出它的名字。它先把这团光认成各种日常的暖东西，但都不确定，所以框是红的、在抖、会认错。最后这些猜测汇成一个答案 oxytocin，框变绿，画面像被拍下来一样定住。</p>
 <p>动人的地方在反差：冷的识别，对上暖的东西。所以框要尽量原始、尽量像真的模型输出，不做任何美化。</p>
 
 <div class="phones">
-  <div class="phone"><div class="frame"><iframe src="index.html?theme=light&lang=zh" loading="lazy"></iframe></div><p>浅色，中文（点画面重播）</p></div>
-  <div class="phone"><div class="frame"><iframe src="index.html?theme=dark&lang=en" loading="lazy"></iframe></div><p>深色，英文</p></div>
-  <div class="phone"><div class="frame"><iframe src="index.html?theme=light&lang=en&sim=slow" loading="lazy"></iframe></div><p>慢网络：服务器 15 秒才完成</p></div>
+  <div class="phone"><div class="frame"><iframe src="intro.html?theme=light&lang=zh" loading="lazy"></iframe></div><p>浅色，中文（点画面重播）</p></div>
+  <div class="phone"><div class="frame"><iframe src="intro.html?theme=dark&lang=en" loading="lazy"></iframe></div><p>深色，英文</p></div>
+  <div class="phone"><div class="frame"><iframe src="intro.html?theme=light&lang=en&sim=slow" loading="lazy"></iframe></div><p>慢网络：服务器 15 秒才完成</p></div>
 </div>
 
 <h2>2 三层画面</h2>
@@ -76,8 +76,14 @@ th { color: var(--mute); font-weight: 500; }
 <li>光不能用绿色（色相 75° 到 170°），绿色只留给定格那一下。</li>
 <li>浅色模式下，光像颜料叠在纸上，两团重叠的地方颜色更深。深色模式下，光像发光体，重叠的地方更亮，但不能过曝成白色。</li>
 </ul>
-<h3>颗粒</h3>
-<p>每个颗粒格占 <b>3 个屏幕点</b>，颗粒只会把颜色提亮、不会压暗，所以没有黑色噪点。颗粒只落在光上，纸上没有，这样前景和背景才分得开。颗粒每帧刷新，定格后跟着冻住。</p>
+<h3>质感：磨砂</h3>
+<p>光的表面是磨砂玻璃的质感，不是噪点。磨砂层固定在屏幕上不动，光在它后面流动，看起来像隔着一块磨砂玻璃看光。它由三部分组成：</p>
+<ul>
+<li>一层乳白的薄雾，让颜色像透过玻璃看到的一样柔和。</li>
+<li>大块的不均匀，像喷砂玻璃上深浅不一的地方。</li>
+<li>极细的柔和颗粒，小于 2 个屏幕点，摸起来像哑光，不会一颗颗跳出来。</li>
+</ul>
+<p>每团光的边缘还有一圈很淡的亮边，像磨砂物件转过去的轮廓。纸上没有这层质感，前景和背景靠它分开。旧的 3 点噪点版仍可用 <code>?finish=grain</code> 打开。</p>
 
 <h2>3 检测框</h2>
 <div class="box-demo">
@@ -108,7 +114,7 @@ th { color: var(--mute); font-weight: 500; }
 <h2>4 进度：真实加载，没有进度条</h2>
 <p>这个动画本身就是加载画面，不另加进度条。进度体现在 oxytocin 框上：<b>字母随进度逐个解码</b>，<b>置信度随进度涨到 0.6 左右</b>，留着最后一段给合并后的冲刺。</p>
 <div class="flow">
-  <div class="st"><b>① 识别中</b>小框从词库里不断出现、消失、认错。oxytocin 框在 0.9 秒出现，标签大部分还是乱码。<br><small>持续到服务器报完成</small></div>
+  <div class="st"><b>① 识别中</b>小框从词库里不断出现、消失、认错。oxytocin 框要等加载过半（进度 ≥ 0.5，且至少 1.3 秒）才出现，出现时一半字母已解码。<br><small>持续到服务器报完成</small></div>
   <div class="st"><b>② 合并</b>服务器报完成后，当前所有小框从离中心最近的开始，每隔 0.13 秒并进去一个，每个用 0.38 秒滑过去、撑大到和大框重合，然后消失。oxytocin 完整显示，每并进一个，置信度涨一点，全部并完时在 0.68 左右。<br><small>最多约 1 秒</small></div>
   <div class="st"><b>③ 冲刺并定格</b>全部并完后，置信度在 0.35 秒内从 0.68 一路涨到 1.00，先快后慢。到 1.00 的那一刻整个画面冻住、框变绿，发出 <code>oxytocin-intro-finished</code>。<br><small>这时视线已经在左上角的数字上</small></div>
 </div>
@@ -116,9 +122,10 @@ th { color: var(--mute); font-weight: 500; }
 <tr><th>规则</th><th>数值</th></tr>
 <tr><td>显示的进度</td><td>取两者中较大的：时间推进的假进度 <code>0.9 × (1 − e^(−t/6))</code>，以及服务器报来的进度。服务器报完成之前，最高到 0.95。</td></tr>
 <tr><td>只进不退</td><td>服务器报来更小的值时不往回走。显示值平滑地追向目标值。</td></tr>
-<tr><td>最短时长</td><td>就算服务器瞬间完成，也至少播 2.6 秒才开始合并，保证能看到几个框。</td></tr>
+<tr><td>最短时长</td><td>就算服务器瞬间完成，也至少播 2.6 秒才开始合并，保证能看到几个框；oxytocin 框出现后至少停 0.6 秒才开始合并。</td></tr>
 <tr><td>接口</td><td><code>OxytocinIntro.setProgress(0~1)</code> 报进度，<code>OxytocinIntro.done()</code> 报完成，<code>oxytocin-intro-finished</code> 事件通知动画结束。</td></tr>
-<tr><td>原型的模拟</td><td>默认用假服务器，随机 2.5 到 9 秒内完成。<code>?sim=slow</code> 固定 15 秒，<code>?sim=off</code> 关掉假服务器，只听真实接口。</td></tr>
+<tr><td>原型的模拟</td><td>默认用假服务器，随机 2.5 到 9 秒内完成。<code>?sim=slow</code> 固定 15 秒，<code>?sim=instant</code> 立刻完成（网页首屏用），<code>?sim=off</code> 关掉假服务器，只听真实接口。</td></tr>
+<tr><td>嵌入</td><td><code>?embed=1</code> 铺满所在的框；<code>?nobox=1</code> 只有流动的光，没有检测框，也不定格（网页页脚用）。</td></tr>
 </table>
 
 <h2>5 词库</h2>
@@ -155,7 +162,7 @@ th { color: var(--mute); font-weight: 500; }
 <li>另加进度条、百分比或"加载中"之类的文字。</li>
 <li>给框加圆角、阴影、渐变，或者用好看的字体。</li>
 <li>定格之前出现任何绿色，包括光的颜色。</li>
-<li>纸上加颗粒，或者让纸动起来。</li>
+<li>在光上加一颗颗看得见的噪点，或者给纸加质感、让纸动起来。</li>
 <li>把光做散，让两团光分开，或者变成很多团。</li>
 <li>词库里写抽象形容词。</li>
 <li>定格以后画面还在变。</li>
