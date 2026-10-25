@@ -7,159 +7,145 @@
 <title>Oxytocin</title>
 <style>
 :root {
-  --paper: #efebe4; --sheet: #e7e2d9; --ink: #24211c; --mute: #6f685d; --line: rgba(36, 33, 28, .14);
-  --pill: rgba(36, 33, 28, .07); --red: #ff2d2d; --green: #1dff5e;
+  --paper: #efebe4; --sheet: #e7e2d9; --ink: #1f1c18; --mute: #6f685d;
+  --line: rgba(31, 28, 24, .22); --pill: rgba(31, 28, 24, .07);
   --mono: "SF Mono", ui-monospace, Menlo, "PingFang SC", monospace;
-  --sans: -apple-system, "SF Pro Display", "PingFang SC", system-ui, sans-serif;
+  --sans: -apple-system, "SF Pro Text", "PingFang SC", system-ui, sans-serif;
   --serif: "New York", "Iowan Old Style", Georgia, "Songti SC", serif;
+  --nav-h: clamp(72px, calc(3.125vw + 62px), 108px);
+  --head-h: clamp(5.75rem, 7vw, 6.5rem);
+  --pad: clamp(20px, calc(4.6875vw + 5px), 80px);
 }
 @media (prefers-color-scheme: dark) {
-  :root { --paper: #16171c; --sheet: #1d1e24; --ink: #ebe7e0; --mute: #9a948a; --line: rgba(235, 231, 224, .12); --pill: rgba(235, 231, 224, .08); }
+  :root { --paper: #16171c; --sheet: #1d1e24; --ink: #ebe7e0; --mute: #9a948a; --line: rgba(235, 231, 224, .2); --pill: rgba(235, 231, 224, .08); }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--paper); color: var(--ink); font: 17px/1.55 var(--sans); -webkit-font-smoothing: antialiased; }
 a { color: inherit; }
 
-/* ---------- top bar: wordmark, pill nav, motion toggle ---------- */
-.bar { position: fixed; top: 0; left: 0; right: 0; z-index: 30; display: flex; align-items: center; justify-content: space-between;
+/* ---------- top bar ---------- */
+.bar { position: fixed; top: 0; left: 0; right: 0; z-index: 40; display: flex; align-items: center; justify-content: space-between;
   padding: calc(env(safe-area-inset-top, 0px) + 18px) 26px 0; pointer-events: none; }
 .bar > * { pointer-events: auto; }
+/* past the hero the bar becomes paper, so text scrolling up never shows behind the wordmark */
+.bar.solid { background: var(--paper); height: var(--nav-h); align-items: flex-start; pointer-events: auto; }
 .mark { font: 24px/1 var(--serif); letter-spacing: -.01em; text-decoration: none; }
 .nav { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--pill); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .nav a { font-size: 12px; padding: 6px 12px; border-radius: 999px; text-decoration: none; }
 .nav a:hover { background: var(--pill); }
-.toggle { width: 30px; height: 30px; border-radius: 50%; border: 0; background: var(--pill); color: var(--ink); font: 11px var(--mono); cursor: pointer; }
+.spacer { width: 30px; }
 @media (max-width: 640px) { .nav { display: none; } }
 
-/* ---------- hero: the live intro ---------- */
-.hero { position: relative; height: 100vh; height: 100dvh; }
+/* ---------- hero: the frosted intro stays pinned; the story rides up over it ---------- */
+.hero { position: sticky; top: 0; height: 100vh; height: 100svh; z-index: 1; }
 .hero iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block; }
 
-/* ---------- the curtain: everything above the footer, lifted with rounded bottom corners ---------- */
-.curtain { position: relative; z-index: 2; background: var(--paper); border-radius: 0 0 34px 34px; margin-bottom: 72vh; box-shadow: 0 30px 60px rgba(0,0,0,.18); }
-
-/* ---------- values world: sticky stage driven by scroll ---------- */
-.world { position: relative; height: calc(var(--steps) * 100vh); }
-.stage { position: sticky; top: 0; height: 100vh; height: 100dvh; overflow: hidden; }
-.floor { position: absolute; left: -50%; right: -50%; bottom: -10%; height: 62%; transform-origin: 50% 0;
-  transform: perspective(520px) rotateX(62deg);
-  background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px);
-  background-size: 64px 64px; -webkit-mask-image: linear-gradient(to bottom, transparent, #000 35%); mask-image: linear-gradient(to bottom, transparent, #000 35%); }
-#swarm { position: absolute; inset: 0; width: 100%; height: 100%; }
-.window { position: absolute; right: 5vw; top: 13vh; width: min(52vw, 720px); aspect-ratio: 16 / 10; border-radius: 12px; overflow: hidden;
-  background: var(--sheet); box-shadow: 0 24px 70px rgba(0,0,0,.22), 0 0 0 1px var(--line); will-change: transform, opacity; }
-.window .chrome { height: 30px; display: flex; align-items: center; gap: 6px; padding: 0 12px; font: 11px var(--mono); color: var(--mute); border-bottom: 1px solid var(--line); }
-.window .chrome i { width: 9px; height: 9px; border-radius: 50%; background: var(--line); }
-.window .chrome span { margin-left: 10px; }
-.window .shot { position: absolute; inset: 30px 0 0; }
-.window .glow { position: absolute; inset: 0; }
-.window .det { position: absolute; left: 22%; top: 18%; width: 56%; height: 64%; border: 1.5px solid var(--c, var(--red)); }
-.window .det .tag { position: absolute; left: -1.5px; bottom: 100%; background: var(--c, var(--red)); color: #fff; font: 11px/1.3 var(--mono); padding: 1px 5px; white-space: nowrap; }
-.window .det.ok { --c: var(--green); }
-.window .det.ok .tag { color: #03140a; }
-.card { position: absolute; left: 4vw; bottom: 9vh; width: min(380px, 84vw); padding: 18px 20px 16px; border-radius: 14px;
-  background: var(--sheet); box-shadow: 0 16px 40px rgba(0,0,0,.16), 0 0 0 1px var(--line); will-change: transform, opacity; }
-.card .row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.card h3 { margin: 0; font: 30px/1.1 var(--serif); letter-spacing: -.01em; }
-.card .chip { font: 10px/1 var(--mono); padding: 4px 6px; background: var(--green); color: #03140a; }
-.card p { margin: 0 0 10px; color: var(--mute); font-size: 15px; }
-.card .from { font: 11px var(--mono); color: var(--mute); }
-.overview { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); display: flex; justify-content: center; gap: 2.2vw; padding: 0 4vw; opacity: 0; pointer-events: none; }
-.overview .mini { flex: 1 1 0; max-width: 190px; text-align: center; font: 12px var(--mono); }
-.overview .mini div { aspect-ratio: 4 / 3; border-radius: 8px; margin-bottom: 10px; position: relative; overflow: hidden; box-shadow: 0 0 0 1px var(--line); }
-.overview .mini b { display: block; font: 18px var(--serif); margin-top: 2px; }
-.count { position: absolute; left: 4vw; top: calc(env(safe-area-inset-top, 0px) + 80px); font: 11px var(--mono); letter-spacing: .12em; color: var(--mute); }
-@media (max-width: 760px) {
-  .window { left: 6vw; right: 6vw; width: auto; top: 46vh; }
-  .card { bottom: 4vh; }
-  .overview { flex-wrap: wrap; gap: 16px; }
-  .overview .mini { flex-basis: 28%; }
+/* ---------- story: sticky title, stacking chapter headers, descriptions ---------- */
+.story { position: relative; z-index: 2; background: var(--paper); padding: calc(var(--nav-h) + 20px) var(--pad) 0; border-top: 1px solid var(--line); scroll-margin-top: 0; }
+.rail { max-width: 92rem; margin: 0 auto; }
+.body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(16rem, 2fr); gap: 0 clamp(32px, calc(1.25vw + 28px), 48px); }
+.sticky { position: sticky; top: var(--nav-h); grid-column: 2; grid-row: 1; align-self: start; }
+.eyebrow { margin: 0 0 clamp(1.15rem, 2vw, 2rem); font: 430 clamp(.78rem, 1.2vw, .97rem)/1.35 var(--sans); letter-spacing: -.02em; text-transform: uppercase; color: var(--mute);
+  opacity: 0; transform: translateY(14px); transition: opacity .7s cubic-bezier(.25,.46,.45,.94), transform .7s cubic-bezier(.25,.46,.45,.94); }
+.title { display: flex; flex-wrap: wrap; gap: 0 .24em; max-width: 12ch; margin: 0; font: 400 clamp(24px, calc(1.875vw + 18px), 48px)/1 var(--serif); letter-spacing: -.035em; }
+html[lang^="zh"] .title { gap: 0; max-width: 9em; line-height: 1.2; letter-spacing: 0; }
+.mask { display: inline-block; overflow: hidden; padding-bottom: .06em; }
+.word { display: block; transform: translateY(110%) rotate(6deg); transform-origin: 0 100%; transition: transform .8s cubic-bezier(.215,.61,.355,1); transition-delay: calc(var(--i) * 80ms); }
+.sticky.in .eyebrow { opacity: 1; transform: none; }
+.sticky.in .word { transform: none; }
+.chapters { grid-column: 1; grid-row: 1; display: grid; align-content: start; }
+.chapter { display: contents; }
+.chapter header { position: sticky; top: calc(var(--nav-h) + var(--n) * var(--head-h)); z-index: calc(10 + var(--n)); min-height: var(--head-h);
+  padding: .85rem 0 1rem; background: var(--paper); border-top: 1px solid var(--line); box-shadow: 0 -2px 0 var(--paper); }
+.meta { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 .65rem; font: 650 clamp(.72rem, .85vw, .82rem)/1.2 var(--sans); letter-spacing: .035em; text-transform: uppercase; color: var(--mute); }
+.meta span:last-child { font: 400 11px var(--mono); letter-spacing: 0; text-transform: none; }
+.chapter h3 { max-width: 24ch; margin: 0; font: 400 clamp(18px, calc(.7vw + 13.5px), 24px)/1.06 var(--serif); letter-spacing: -.025em; }
+html[lang^="zh"] .chapter h3 { line-height: 1.3; letter-spacing: 0; }
+.desc { min-height: clamp(28rem, 68svh, 46rem); max-width: 47ch; margin: 0; padding: clamp(2rem, 4vw, 4rem) 0 clamp(4rem, 8vw, 8rem);
+  font-size: clamp(1.05rem, calc(.5vw + .9rem), 1.35rem); line-height: 1.45; color: var(--ink);
+  opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.25,.46,.45,.94), transform .7s cubic-bezier(.25,.46,.45,.94); }
+.desc.in { opacity: 1; transform: none; }
+.closing { display: flex; align-items: center; justify-content: space-between; gap: 2rem; min-height: 64svh; padding: clamp(6rem, 10vw, 10rem) 0; }
+.closing p { margin: 0; max-width: 10ch; font: 400 clamp(3.5rem, 7.5vw, 7rem)/.86 var(--serif); letter-spacing: -.05em; }
+html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 0; }
+@media (max-width: 979px) {
+  :root { --head-h: 4.6rem; }
+  .body { grid-template-columns: minmax(0, 1fr); }
+  .sticky { position: relative; top: auto; grid-column: auto; grid-row: auto; padding-bottom: clamp(3rem, 8vw, 4rem); }
+  .chapters { grid-column: auto; grid-row: 2; }
+  .chapter h3 { font-size: 18px; }
+  .desc { min-height: 56svh; }
+  .closing { flex-direction: column; align-items: flex-start; justify-content: flex-end; min-height: 48svh; }
 }
 
-/* ---------- manifesto + about ---------- */
-.block { max-width: 1120px; margin: 0 auto; padding: 22vh 26px 10vh; }
-.label { font: 11px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--mute); margin: 0 0 22px; }
-.manifesto h2 { font: 600 clamp(36px, 6.6vw, 92px)/1.04 var(--sans); letter-spacing: -.035em; margin: 0 0 30px; max-width: 13em; }
-html[lang^="zh"] .manifesto h2 { letter-spacing: -.01em; line-height: 1.18; }
-.manifesto .lede { font-size: clamp(18px, 2vw, 22px); color: var(--mute); max-width: 34em; margin: 0; }
-.reveal { opacity: 0; transform: translateY(28px); transition: opacity .9s cubic-bezier(.2,.7,.2,1), transform .9s cubic-bezier(.2,.7,.2,1); }
-.reveal.in { opacity: 1; transform: none; }
-.about { display: grid; grid-template-columns: 1fr 1.3fr; gap: 6vw; margin-top: 16vh; }
-.about p { margin: 0 0 16px; }
-.facts { font: 12px/2 var(--mono); color: var(--mute); border-top: 1px solid var(--line); padding-top: 16px; margin-top: 26px; }
-@media (max-width: 760px) { .about { grid-template-columns: 1fr; } }
-
-/* ---------- closer card ---------- */
-.closer { max-width: 1120px; margin: 0 auto; padding: 6vh 26px 12vh; }
-.closer .box { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 30px 32px; border-radius: 18px; background: var(--sheet); box-shadow: 0 0 0 1px var(--line); }
-.closer .box p { margin: 0; font-size: clamp(18px, 2vw, 24px); line-height: 1.3; max-width: 22em; }
+/* ---------- about + contact ---------- */
+.about { position: relative; z-index: 2; background: var(--paper); padding: 0 var(--pad) 12vh; }
+.about .grid { max-width: 92rem; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 3fr) minmax(16rem, 2fr); gap: 0 clamp(32px, calc(1.25vw + 28px), 48px); border-top: 1px solid var(--line); padding-top: 1.2rem; }
+.about .eyebrow { opacity: 1; transform: none; }
+.about p { margin: 0 0 16px; max-width: 40em; }
+.facts { font: 12px/2 var(--mono); color: var(--mute); }
+.contact { max-width: 92rem; margin: 10vh auto 0; display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 30px 32px; border: 1px solid var(--line); border-radius: 18px; }
+.contact p { margin: 0; font: 400 clamp(20px, 2.2vw, 28px)/1.2 var(--serif); }
 .btn { flex: none; font-size: 14px; padding: 10px 16px; border-radius: 999px; background: var(--ink); color: var(--paper); text-decoration: none; }
-@media (max-width: 640px) { .closer .box { flex-direction: column; align-items: flex-start; } }
+@media (max-width: 979px) { .about .grid { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .contact { flex-direction: column; align-items: flex-start; } }
 
-/* ---------- footer: fixed under the curtain, revealed as it lifts ---------- */
-.foot { position: fixed; left: 0; right: 0; bottom: 0; height: 72vh; z-index: 1; overflow: hidden; color: #fff; }
+/* ---------- footer: the frosted light again, under a curtain ---------- */
+.curtain-end { position: relative; z-index: 2; height: 34px; background: var(--paper); border-radius: 0 0 34px 34px; box-shadow: 0 30px 60px rgba(0,0,0,.18); margin-bottom: 72vh; }
+.foot { position: fixed; left: 0; right: 0; bottom: 0; height: 72vh; z-index: 0; overflow: hidden; color: var(--ink); visibility: hidden; }
+.foot.on { visibility: visible; }
 .foot iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; pointer-events: none; }
 .foot .inner { position: absolute; inset: auto 0 0 0; padding: 0 26px calc(env(safe-area-inset-bottom, 0px) + 22px); display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; }
-.foot .big { font: clamp(64px, 13vw, 200px)/.9 var(--serif); letter-spacing: -.03em; mix-blend-mode: difference; }
-.foot .links { text-align: right; font-size: 17px; line-height: 1.7; mix-blend-mode: difference; }
+.foot .big { font: clamp(64px, 13vw, 200px)/.9 var(--serif); letter-spacing: -.03em; }
+.foot .links { text-align: right; font-size: 17px; line-height: 1.7; }
 .foot .links a { display: block; text-decoration: none; }
-.foot .links small { display: block; margin-top: 14px; font: 11px var(--mono); }
+.foot .links small { display: block; margin-top: 14px; font: 11px var(--mono); color: var(--mute); }
 </style>
 </head>
 <body>
 <header class="bar">
   <a class="mark" href="#top">oxytocin</a>
-  <nav class="nav"><a href="#values" data-t="navValues"></a><a href="#manifesto" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a></nav>
-  <button class="toggle" id="toggle" aria-label="pause">II</button>
+  <nav class="nav"><a href="#values" data-t="navValues"></a><a href="#about" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a></nav>
+  <span class="spacer"></span>
 </header>
 
-<div class="curtain" id="top">
-  <div class="hero"><iframe src="intro.html?embed=1&sim=instant" title="Oxytocin"></iframe></div>
+<div class="hero" id="top"><iframe src="intro.html?embed=1&sim=instant" title="Oxytocin"></iframe></div>
 
-  <section class="world" id="values" style="--steps: 8">
-    <div class="stage">
-      <div class="floor"></div>
-      <canvas id="swarm"></canvas>
-      <div class="count" id="count"></div>
-      <div class="window" id="win">
-        <div class="chrome"><i></i><i></i><i></i><span id="file"></span></div>
-        <div class="shot"><div class="glow" id="winGlow"></div><div class="det" id="det"><span class="tag" id="tag"></span></div></div>
+<section class="story" id="values">
+  <div class="rail">
+    <div class="body">
+      <div class="sticky" id="sticky">
+        <p class="eyebrow" data-t="eyebrow"></p>
+        <h2 class="title" id="title"></h2>
       </div>
-      <div class="card" id="card">
-        <div class="row"><h3 id="cardTitle"></h3><span class="chip">1.00</span></div>
-        <p id="cardLine"></p>
-        <div class="from" id="cardFrom"></div>
-      </div>
-      <div class="overview" id="overview"></div>
+      <div class="chapters" id="chapters"></div>
     </div>
-  </section>
+    <div class="closing"><p data-t="closing"></p></div>
+  </div>
+</section>
 
-  <section class="block manifesto" id="manifesto">
-    <p class="label reveal" data-t="l1"></p>
-    <h2 class="reveal" data-t="h1"></h2>
-    <p class="lede reveal" data-t="p1"></p>
-    <div class="about">
-      <div><p class="label reveal" data-t="l3"></p></div>
-      <div class="reveal">
-        <p data-t="a1"></p>
-        <p data-t="a2"></p>
-        <div class="facts" data-t="facts"></div>
-      </div>
+<section class="about" id="about">
+  <div class="grid">
+    <div>
+      <p data-t="a1"></p>
+      <p data-t="a2"></p>
     </div>
-  </section>
+    <div>
+      <p class="eyebrow" data-t="who"></p>
+      <div class="facts" data-t="facts"></div>
+    </div>
+  </div>
+  <div class="contact" id="contact"><p data-t="ask"></p><a class="btn" href="mailto:" data-t="cta"></a></div>
+</section>
+<div class="curtain-end"></div>
 
-  <section class="closer" id="contact">
-    <div class="box reveal"><p data-t="ask"></p><a class="btn" href="mailto:" data-t="cta"></a></div>
-  </section>
-</div>
-
-<footer class="foot">
-  <iframe src="intro.html?embed=1&sim=instant&nobox=1" title="" tabindex="-1" aria-hidden="true"></iframe>
+<footer class="foot" id="foot">
+  <iframe src="intro.html?embed=1&nobox=1" title="" tabindex="-1" aria-hidden="true"></iframe>
   <div class="inner">
     <div class="big">oxytocin</div>
     <div class="links">
-      <a href="#values" data-t="navValues"></a><a href="#manifesto" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a>
+      <a href="#values" data-t="navValues"></a><a href="#about" data-t="navAbout"></a><a href="#contact" data-t="navContact"></a>
       <small>© 2026 Oxytocin LLC</small>
     </div>
   </div>
@@ -168,157 +154,94 @@ html[lang^="zh"] .manifesto h2 { letter-spacing: -.01em; line-height: 1.18; }
 <script>
 const LANG = (new URLSearchParams(location.search).get('lang') || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
 document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
-const T = {
+
+const COPY = {
   en: {
     navValues: 'Values', navAbout: 'About', navContact: 'Contact',
-    l1: 'Manifesto', h1: 'Oxytocin is what your body makes when someone holds your hand.',
-    p1: 'We make things that try to do the same: software and experiences that leave people a little closer, a little safer, a little more alive.',
-    l3: 'Who we are',
+    eyebrow: 'What we make',
+    title: ['Make', 'things', 'that', 'feel', 'like', 'a', 'held', 'hand.'],
+    closing: 'That is the whole idea.',
     a1: 'Oxytocin is an independent studio. We design and build products for people who could use a warmer moment in their day.',
-    a2: 'We care more about how something feels after you close it than how long it keeps you open. Small team, slow decisions, careful details.',
-    facts: 'Oxytocin LLC<br>Wyoming, United States<br>Since 2025',
+    a2: 'We care more about how something feels after you close it than how long it keeps you open.',
+    who: 'Who we are', facts: 'Oxytocin LLC<br>Wyoming, United States<br>Since 2025',
     ask: 'Want to make something warm with us?', cta: 'Get in touch →',
-    of: 'of', overview: 'All six',
   },
   zh: {
     navValues: '价值观', navAbout: '关于', navContact: '联系',
-    l1: '宣言', h1: '有人牵起你的手时，身体会分泌一种叫催产素的东西。',
-    p1: '我们想做的东西，也能做到这件事：让人用完以后，觉得离别人近了一点、安心了一点、活着的感觉多了一点。',
-    l3: '我们是谁',
+    eyebrow: '我们做什么',
+    title: ['做', '让人', '觉得', '被', '牵着手', '的', '东西。'],
+    closing: '就是这么简单。',
     a1: 'Oxytocin 是一家独立工作室，为那些需要一点温暖时刻的人，设计和制作产品。',
-    a2: '比起让你停留多久，我们更在乎你关掉以后心里是什么感觉。团队小，决定慢，细节仔细。',
-    facts: 'Oxytocin LLC<br>美国怀俄明州<br>始于 2025 年',
+    a2: '比起让你停留多久，我们更在乎你关掉以后心里是什么感觉。',
+    who: '我们是谁', facts: 'Oxytocin LLC<br>美国怀俄明州<br>始于 2025 年',
     ask: '想和我们一起做点温暖的东西吗？', cta: '联系我们 →',
-    of: '/', overview: '六件事',
   },
 }[LANG];
-document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = T[el.dataset.t]);
 
-// ---------- the six values: each first mistaken for an everyday thing ----------
-const VALUES = [
-  { hues: [18, 345], en: ['warmth', 'warm_milk', 'The feeling of a cup held in both hands.'], zh: ['温暖', '热牛奶', '双手捧着一杯热饮的那种感觉。'] },
-  { hues: [330, 275], en: ['closeness', 'held_hand', 'Near enough to hear each other breathe.'], zh: ['亲近', '牵着的手', '近到能听见彼此呼吸。'] },
-  { hues: [38, 8], en: ['gentleness', 'blanket', 'Nothing here is in a hurry.'], zh: ['温柔', '毯子', '这里没有什么是急的。'] },
-  { hues: [205, 255], en: ['wonder', 'first_snow', 'Like seeing snow for the first time, every time.'], zh: ['惊喜', '初雪', '每一次都像第一次看到雪。'] },
-  { hues: [34, 300], en: ['safety', 'lamp_left_on', 'A light someone left on for you.'], zh: ['安心', '留着的灯', '有人给你留了一盏灯。'] },
-  { hues: [352, 22], en: ['aliveness', 'heartbeat', 'A heartbeat you can feel.'], zh: ['生命感', '心跳', '能感觉到自己的心跳。'] },
-].map(v => ({ hues: v.hues, name: v[LANG][0], guess: v[LANG][1], line: v[LANG][2] }));
-const N = VALUES.length;
-const dark = () => matchMedia('(prefers-color-scheme: dark)').matches;
-const glowCSS = h => `radial-gradient(42% 52% at 40% 48%, hsl(${h[0]} 92% 62% / .95), transparent 72%), radial-gradient(40% 50% at 62% 54%, hsl(${h[1]} 90% 64% / .9), transparent 72%)`;
+// one chapter per value: label, the everyday thing it was first mistaken for, a headline and its description
+const CHAPTERS = {
+  en: [
+    ['Warmth', 'warm_milk', 'Things should be warm to the touch.', 'Before anyone reads a word, they feel the temperature. We start every project there: the colour, the pace, the first sound, the way it says hello.'],
+    ['Closeness', 'held_hand', 'Close enough to hear each other breathe.', 'We design for the moments people share, not the hours they spend alone with a screen. The best feature is often someone else.'],
+    ['Gentleness', 'blanket', 'Nothing here is in a hurry.', 'No countdowns, no guilt, no red dots shouting for attention. If something matters, it can wait for you.'],
+    ['Wonder', 'first_snow', 'Like seeing snow for the first time.', 'Somewhere in everything we make there is a small surprise, left on purpose for whoever looks closely enough.'],
+    ['Safety', 'lamp_left_on', 'A light someone left on for you.', 'Your time and your attention are not ours to take. We ask for little, say plainly what we keep, and let you leave whenever you like.'],
+    ['Aliveness', 'heartbeat', 'A heartbeat you can feel.', 'Things that breathe a little: light that drifts, words that change, a world that is slightly different every time you come back.'],
+  ],
+  zh: [
+    ['温暖', '热牛奶', '东西摸上去应该是暖的。', '人还没读到一个字，就先感到了温度。我们每个项目都从这里开始：颜色、节奏、第一个声音、打招呼的方式。'],
+    ['亲近', '牵着的手', '近到能听见彼此呼吸。', '我们为人与人一起的时刻设计，而不是一个人对着屏幕的那几个小时。最好的功能，常常是另一个人。'],
+    ['温柔', '毯子', '这里没有什么是急的。', '没有倒计时，没有愧疚感，没有吵着要你看的小红点。真正重要的东西，可以等你。'],
+    ['惊喜', '初雪', '像第一次看到雪。', '我们做的每样东西里，都故意藏着一个小惊喜，留给看得够仔细的人。'],
+    ['安心', '留着的灯', '有人给你留了一盏灯。', '你的时间和注意力，都不是我们的。我们要得少，说清楚留下了什么，你想走随时可以走。'],
+    ['生命感', '心跳', '能感觉到的心跳。', '会呼吸的东西：流动的光，会变的词，每次回来都有一点不一样的世界。'],
+  ],
+}[LANG];
 
-const $ = id => document.getElementById(id);
-const win = $('win'), card = $('card'), det = $('det'), tag = $('tag'), overview = $('overview');
-overview.innerHTML = VALUES.map((v, i) => `<div class="mini"><div style="background:${glowCSS(v.hues)}"></div>0${i + 1}<b>${v.name}</b></div>`).join('');
+document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = COPY[el.dataset.t]);
+document.getElementById('title').innerHTML = COPY.title.map((w, i) => `<span class="mask"><span class="word" style="--i:${i}">${w}</span></span>`).join('');
+document.getElementById('chapters').innerHTML = CHAPTERS.map(([label, guess, head, desc], n) => `
+  <article class="chapter" style="--n:${n}">
+    <header><p class="meta"><span>0${n + 1} ${label}</span><span>${guess} → ${label.toLowerCase()}</span></p><h3>${head}</h3></header>
+    <p class="desc">${desc}</p>
+  </article>`).join('');
 
-// ---------- particle swarm: two glows made of dots that scatter and re-form between values ----------
-const cv = $('swarm'), cx = cv.getContext('2d');
-let CW = 0, CH = 0, DPR = 1;
-const P = Array.from({ length: 1500 }, (_, i) => {
-  const g = i % 2, a = Math.random() * 6.283, r = Math.sqrt(-2 * Math.log(1 - Math.random() * .98)) * .5;
-  return { g, hx: Math.cos(a) * r, hy: Math.sin(a) * r, sx: (Math.random() - .5) * 6, sy: (Math.random() - .5) * 3, s: .6 + Math.random() * 1.6, ph: Math.random() * 6.283 };
-});
-function sizeCanvas() { DPR = Math.min(devicePixelRatio || 1, 2); CW = cv.clientWidth; CH = cv.clientHeight; cv.width = CW * DPR; cv.height = CH * DPR; }
-addEventListener('resize', sizeCanvas); sizeCanvas();
+// reveals, each plays once
+const once = (els, threshold, rootMargin) => {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold, rootMargin });
+  els.forEach(el => io.observe(el));
+};
+once([document.getElementById('sticky')], 0, '0px 0px -15% 0px');
+once(document.querySelectorAll('.desc'), 0, '0px 0px -14% 0px');
 
-let paused = false, shown = 0, last = 0;
-$('toggle').onclick = () => { paused = !paused; $('toggle').textContent = paused ? '▶' : 'II'; };
+const foot = document.getElementById('foot');
+const bar = document.querySelector('.bar'), hero = document.querySelector('.hero');
+const lip = document.querySelector('.curtain-end');
+// paper bar from the end of the hero until the curtain's lifted edge passes under it
+const syncBar = () => bar.classList.toggle('solid', scrollY > hero.offsetHeight - 2 && lip.getBoundingClientRect().top > bar.offsetHeight);
+// the footer only shows once the curtain is near, so the hero never sees it
+addEventListener('scroll', () => { foot.classList.toggle('on', scrollY + innerHeight > document.documentElement.scrollHeight - innerHeight * 1.2); syncBar(); }, { passive: true });
 
-function stepState(p) {
-  // steps: 0..N-1 values, N = overview; p in [0, N]
-  const i = Math.min(N - 1, Math.floor(p)), f = p - Math.floor(p);
-  return { i, f, over: Math.max(0, Math.min(1, (p - (N - .6)) / .6)) };
-}
-
-function drawSwarm(t, p) {
-  const { i, f, over } = stepState(p);
-  const nx = Math.min(N - 1, i + 1);
-  // scatter peaks halfway between two values
-  const k = p >= N - 1 ? 0 : Math.max(0, Math.min(1, (f - .55) / .45));
-  const scat = Math.sin(Math.PI * k) * (1 - over);
-  const mix = k > .5 ? 1 : 0;
-  const v = VALUES[mix ? nx : i];
-  const small = CW < 760;
-  const ox = small ? CW * .5 : CW * .2, oy = small ? CH * .27 : CH * .5, R = Math.min(CW, CH) * (small ? .17 : .2);
-  cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  cx.clearRect(0, 0, CW, CH);
-  const alpha = 1 - over;
-  if (alpha <= 0) return;
-  cx.globalCompositeOperation = dark() ? 'lighter' : 'multiply';
-  const orbit = t * .45;
-  for (const q of P) {
-    const cxg = Math.cos(orbit + q.g * Math.PI) * R * .34, cyg = Math.sin(orbit + q.g * Math.PI) * R * .26;
-    const wob = paused ? 0 : Math.sin(t * 1.3 + q.ph) * 1.4;
-    const x = ox + cxg + q.hx * R + q.sx * R * scat + wob;
-    const y = oy + cyg + q.hy * R + q.sy * R * scat + Math.cos(t * 1.1 + q.ph) * 1.2;
-    const d = Math.hypot(q.hx, q.hy);
-    cx.globalAlpha = alpha * Math.max(.08, 1 - d * 1.1) * (1 - scat * .4);
-    cx.fillStyle = `hsl(${v.hues[q.g]} 90% ${dark() ? 62 : 58}%)`;
-    cx.fillRect(x, y, q.s * 2.2, q.s * 2.2);
+// smooth wheel scrolling (Lenis-style lerp into the native scroll position); touch stays native
+(() => {
+  let target = scrollY, current = scrollY, running = false;
+  const max = () => document.documentElement.scrollHeight - innerHeight;
+  addEventListener('wheel', e => {
+    if (e.ctrlKey) return;
+    e.preventDefault();
+    if (!running) { target = current = scrollY; }
+    target = Math.max(0, Math.min(max(), target + e.deltaY * (e.deltaMode === 1 ? 32 : 1)));
+    if (!running) { running = true; requestAnimationFrame(step); }
+  }, { passive: false });
+  function step() {
+    current += (target - current) * .1;
+    if (Math.abs(target - current) < .5) { current = target; running = false; }
+    scrollTo(0, current);
+    if (running) requestAnimationFrame(step);
   }
-  cx.globalAlpha = 1; cx.globalCompositeOperation = 'source-over';
-}
-
-// window + card slide in from the right / bottom, detection runs red → green as the step settles
-let lastI = -1;
-function layout(t, p) {
-  const { i, f, over } = stepState(p);
-  const v = VALUES[i];
-  if (i !== lastI) {
-    lastI = i;
-    $('file').textContent = `det v1  sample_0${i + 1}.jpg`;
-    $('winGlow').style.background = glowCSS(v.hues);
-    $('cardTitle').textContent = v.name;
-    $('cardLine').textContent = v.line;
-    $('cardFrom').textContent = `${v.guess} → ${v.name}`;
-    $('count').textContent = `0${i + 1} ${T.of} 0${N}`;
-  }
-  // in: f 0→.25, hold, out: f .7→1 (not after the last value)
-  const inK = Math.min(1, f / .25), outK = i === N - 1 ? 0 : Math.max(0, (f - .7) / .3);
-  const ease = x => 1 - Math.pow(1 - x, 3);
-  const enter = i === 0 && p < .02 ? 1 : ease(inK);
-  const leave = ease(outK) + over;
-  win.style.transform = `translateX(${(1 - enter) * 40 - leave * 30}vw)`;
-  win.style.opacity = Math.max(0, Math.min(enter, 1 - leave));
-  card.style.transform = `translateY(${(1 - enter) * 30 + leave * 20}vh)`;
-  card.style.opacity = Math.max(0, Math.min(enter, 1 - leave));
-  overview.style.opacity = over;
-  overview.style.pointerEvents = over > .5 ? 'auto' : 'none';
-  $('count').style.opacity = 1 - over;
-  // detection inside the window: red guess while settling, green value once held
-  const lock = Math.max(0, Math.min(1, (f - .28) / .2));
-  if (lock < 1) {
-    const reds = ['#ff2d2d', '#ff1f4b', '#ff5a36', '#e8121f', '#ff3d6e'];
-    if (!paused && Math.random() < .25) det.style.setProperty('--c', reds[Math.floor(Math.random() * reds.length)]);
-    det.classList.remove('ok');
-    const conf = .3 + .38 * lock + (paused ? 0 : (Math.random() - .5) * .04);
-    tag.textContent = `${lock > .7 ? v.name : v.guess} ${conf.toFixed(2)}`;
-    det.style.transform = paused ? '' : `translate(${(Math.random() - .5) * 3}px, ${(Math.random() - .5) * 3}px)`;
-  } else if (!det.classList.contains('ok')) {
-    det.style.removeProperty('--c'); det.style.transform = ''; det.classList.add('ok'); tag.textContent = `${v.name} 1.00`;
-  }
-}
-
-// smooth scroll-linked progress (eased toward the scroll position)
-const world = $('values');
-function target() {
-  const r = world.getBoundingClientRect(), span = world.offsetHeight - innerHeight;
-  // the last screen of scrolling holds the overview
-  return Math.max(0, Math.min(N, (-r.top / span) * (N + 1)));
-}
-function frame(now) {
-  const dt = Math.min(.05, (now - last) / 1000 || 0); last = now;
-  shown += (target() - shown) * Math.min(1, dt * 9);
-  const t = now / 1000;
-  drawSwarm(t, shown);
-  layout(t, shown);
-  requestAnimationFrame(frame);
-}
-requestAnimationFrame(frame);
-
-// text reveals
-const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && e.target.classList.add('in')), { threshold: .2 });
-document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  // anchor links: stop the glide so the jump lands
+  document.addEventListener('click', e => { if (e.target.closest('a[href^="#"]')) { running = false; } });
+})();
 </script>
 </body>
 </html>
