@@ -6,6 +6,8 @@
 <meta name="color-scheme" content="light dark">
 <title>Oxytocin</title>
 <style>
+/* 猫啃网烟波宋-S (SIL OFL 1.1, assets/fonts/YanBoSong-OFL.txt), cut down to the characters on this page */
+@font-face { font-family: "YanBoSong"; src: url("assets/fonts/yanbosong-s.woff2") format("woff2"); font-display: swap; }
 :root {
   --paper: #efebe4; --sheet: #e7e2d9; --ink: #1f1c18; --mute: #6f685d;
   --line: rgba(31, 28, 24, .22); --pill: rgba(31, 28, 24, .07);
@@ -16,6 +18,7 @@
   --head-h: clamp(5.75rem, 7vw, 6.5rem);
   --pad: clamp(20px, calc(4.6875vw + 5px), 80px);
 }
+html[lang^="zh"] { --serif: "YanBoSong", "Songti SC", serif; }
 @media (prefers-color-scheme: dark) {
   :root { --paper: #16171c; --sheet: #1d1e24; --ink: #ebe7e0; --mute: #9a948a; --line: rgba(235, 231, 224, .2); --pill: rgba(235, 231, 224, .08); }
 }
