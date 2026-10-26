@@ -211,7 +211,7 @@ document.getElementById('lang').onclick = () => { localStorage.setItem('oxytocin
 document.getElementById('title').innerHTML = COPY.title.map((w, i) => `<span class="mask"><span class="word" style="--i:${i}">${w}</span></span>`).join('');
 document.getElementById('chapters').innerHTML = CHAPTERS.map(([label, guess, head, desc], n) => `
   <article class="chapter" style="--n:${n}">
-    <header><p class="meta"><span>0${n + 1}</span><span>${guess} → ${label.toLowerCase()}</span></p><h3>${label}</h3></header>
+    <header><p class="meta"><span>0${n + 1}</span></p><h3>${label}</h3></header>
     <p class="desc"><span class="quote">${head}</span><span class="src">${desc}</span></p>
   </article>`).join('');
 
