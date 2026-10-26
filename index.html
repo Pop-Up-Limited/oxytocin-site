@@ -159,10 +159,10 @@ html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 
 
 <script>
 // follows the browser language; the toggle overrides it and is remembered (?lang= wins for links)
-const LANG = (new URLSearchParams(location.search).get('lang') || localStorage.getItem('oxytocinLang') || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
-document.documentElement.lang = LANG === 'zh' ? 'zh-Hans' : 'en';
+const stored = (() => { try { return localStorage.getItem('oxytocinLang'); } catch (e) { return null; } })();
+let LANG = (new URLSearchParams(location.search).get('lang') || stored || navigator.language || 'en').toLowerCase().startsWith('zh') ? 'zh' : 'en';
 
-const COPY = {
+const ALL_COPY = {
   en: {
     brand: 'oxytocin', navValues: 'Values', navAbout: 'About', navContact: 'Contact', langSwitch: '中文',
     eyebrow: 'Oxytocin',
@@ -181,10 +181,10 @@ const COPY = {
     who: '工作室', facts: 'Oxytocin<br>独立游戏工作室<br>始于 2025 年',
     ask: '合作与媒体。', cta: '联系 →',
   },
-}[LANG];
+};
 
 // one chapter per value: label, the everyday thing the detector first guesses, a headline and its description
-const CHAPTERS = {
+const ALL_CHAPTERS = {
   en: [
     ['Warmth', 'warm_milk', 'Season of mists and mellow fruitfulness,<br>Close bosom-friend of the maturing sun;', 'John Keats, “To Autumn”'],
     ['Closeness', 'held_hand', 'Whatever our souls are made of,<br>his and mine are the same.', 'Emily Brontë, Wuthering Heights'],
@@ -201,27 +201,39 @@ const CHAPTERS = {
     ['安心', '留着的灯', '何当共剪西窗烛，<br>却话巴山夜雨时。', '李商隐《夜雨寄北》'],
     ['生命感', '心跳', '野火烧不尽，春风吹又生。', '白居易《赋得古原草送别》'],
   ],
-}[LANG];
-
-document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = COPY[el.dataset.t]);
-document.title = LANG === 'zh' ? '安妥心 Oxytocin' : 'Oxytocin';
-// the intro inside the page speaks the page's language
-document.querySelectorAll('iframe[data-src]').forEach(f => f.src = `${f.dataset.src}&lang=${LANG}`);
-document.getElementById('lang').onclick = () => { localStorage.setItem('oxytocinLang', LANG === 'zh' ? 'en' : 'zh'); location.href = location.pathname + location.hash; };
-document.getElementById('title').innerHTML = COPY.title.map((w, i) => `<span class="mask"><span class="word" style="--i:${i}">${w}</span></span>`).join('');
-document.getElementById('chapters').innerHTML = CHAPTERS.map(([label, guess, head, desc], n) => `
-  <article class="chapter" style="--n:${n}">
-    <header><p class="meta"><span>0${n + 1}</span></p><h3>${label}</h3></header>
-    <p class="desc"><span class="quote">${head}</span><span class="src">${desc}</span></p>
-  </article>`).join('');
+};
 
 // reveals, each plays once
 const once = (els, threshold, rootMargin) => {
   const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold, rootMargin });
   els.forEach(el => io.observe(el));
 };
+
+// everything that depends on the language, so the toggle can switch in place without a reload
+function render(lang) {
+  LANG = lang;
+  const COPY = ALL_COPY[lang], CHAPTERS = ALL_CHAPTERS[lang];
+  document.documentElement.lang = lang === 'zh' ? 'zh-Hans' : 'en';
+  document.title = lang === 'zh' ? '安妥心 Oxytocin' : 'Oxytocin';
+  document.querySelectorAll('[data-t]').forEach(el => el.innerHTML = COPY[el.dataset.t]);
+  document.getElementById('title').innerHTML = COPY.title.map((w, i) => `<span class="mask"><span class="word" style="--i:${i}">${w}</span></span>`).join('');
+  document.getElementById('chapters').innerHTML = CHAPTERS.map(([label, guess, head, desc], n) => `
+  <article class="chapter" style="--n:${n}">
+    <header><p class="meta"><span>0${n + 1}</span></p><h3>${label}</h3></header>
+    <p class="desc"><span class="quote">${head}</span><span class="src">${desc}</span></p>
+  </article>`).join('');
+  // the intro inside the page speaks the page's language
+  document.querySelectorAll('iframe[data-src]').forEach(f => { const src = `${f.dataset.src}&lang=${lang}`; if (!f.src.endsWith(src)) f.src = src; });
+  once(document.querySelectorAll('.desc'), 0, '0px 0px -14% 0px');
+}
+render(LANG);
 once([document.getElementById('sticky')], 0, '0px 0px -15% 0px');
-once(document.querySelectorAll('.desc'), 0, '0px 0px -14% 0px');
+document.getElementById('lang').addEventListener('click', () => {
+  const next = LANG === 'zh' ? 'en' : 'zh';
+  try { localStorage.setItem('oxytocinLang', next); } catch (e) {}
+  const u = new URL(location.href); u.searchParams.set('lang', next); history.replaceState(null, '', u);
+  render(next);
+});
 
 const foot = document.getElementById('foot');
 const bar = document.querySelector('.bar'), hero = document.querySelector('.hero');
