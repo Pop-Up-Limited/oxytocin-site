@@ -31,6 +31,8 @@ a { color: inherit; }
 /* past the hero the bar becomes paper, so text scrolling up never shows behind the wordmark */
 .bar.solid { background: var(--paper); height: var(--nav-h); align-items: flex-start; pointer-events: auto; }
 .mark { font: 24px/1 var(--serif); letter-spacing: -.01em; text-decoration: none; }
+.logo-img { display: block; height: 30px; width: auto; }
+.foot .big .logo-img { height: clamp(64px, 13vw, 200px); }
 .nav { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: var(--pill); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
 .nav a { font-size: 12px; padding: 6px 12px; border-radius: 999px; text-decoration: none; }
 .nav a:hover { background: var(--pill); }
@@ -63,9 +65,11 @@ html[lang^="zh"] .title { gap: 0; max-width: 9em; line-height: 1.2; letter-spaci
 .chapter h3 { max-width: 24ch; margin: 0; font: 400 clamp(18px, calc(.7vw + 13.5px), 24px)/1.06 var(--serif); letter-spacing: -.025em; }
 html[lang^="zh"] .chapter h3 { line-height: 1.3; letter-spacing: 0; }
 .desc { min-height: clamp(28rem, 68svh, 46rem); max-width: 47ch; margin: 0; padding: clamp(2rem, 4vw, 4rem) 0 clamp(4rem, 8vw, 8rem);
-  font-size: clamp(1.05rem, calc(.5vw + .9rem), 1.35rem); line-height: 1.45; color: var(--ink);
+  font-size: clamp(1.15rem, calc(.6vw + 1rem), 1.5rem); line-height: 1.6; color: var(--ink);
   opacity: 0; transform: translateY(28px); transition: opacity .7s cubic-bezier(.25,.46,.45,.94), transform .7s cubic-bezier(.25,.46,.45,.94); }
 .desc.in { opacity: 1; transform: none; }
+.desc .quote { display: block; font-family: var(--serif); }
+.desc .src { display: block; margin-top: 14px; font: 13px var(--sans); color: var(--mute); }
 .closing { display: flex; align-items: center; justify-content: space-between; gap: 2rem; min-height: 64svh; padding: clamp(6rem, 10vw, 10rem) 0; }
 .closing p { margin: 0; max-width: 10ch; font: 400 clamp(3.5rem, 7.5vw, 7rem)/.86 var(--serif); letter-spacing: -.05em; }
 html[lang^="zh"] .closing p { max-width: 6em; line-height: 1.1; letter-spacing: 0; }
@@ -166,7 +170,7 @@ const COPY = {
     ask: 'For collaborations and press.', cta: 'Contact →',
   },
   zh: {
-    brand: '安妥心', navValues: '价值观', navAbout: '关于', navContact: '联系', langSwitch: 'EN',
+    brand: '<img class="logo-img" src="assets/antuoxin.png" alt="安妥心">', navValues: '价值观', navAbout: '关于', navContact: '联系', langSwitch: 'EN',
     eyebrow: '安妥心',
     title: ['我们', '制造', '幸福。'],
     a1: '安妥心（Oxytocin）是一家独立游戏工作室，在尝试新的游戏形式。',
@@ -179,20 +183,20 @@ const COPY = {
 // one chapter per value: label, the everyday thing the detector first guesses, a headline and its description
 const CHAPTERS = {
   en: [
-    ['Warmth', 'warm_milk', 'Warmth', ''],
-    ['Closeness', 'held_hand', 'Closeness', ''],
-    ['Gentleness', 'blanket', 'Gentleness', ''],
-    ['Wonder', 'first_snow', 'Wonder', ''],
-    ['Safety', 'lamp_left_on', 'Safety', ''],
-    ['Aliveness', 'heartbeat', 'Aliveness', ''],
+    ['Warmth', 'warm_milk', 'Season of mists and mellow fruitfulness,<br>Close bosom-friend of the maturing sun;', 'John Keats, “To Autumn”'],
+    ['Closeness', 'held_hand', 'Whatever our souls are made of,<br>his and mine are the same.', 'Emily Brontë, Wuthering Heights'],
+    ['Gentleness', 'blanket', 'Come forth into the light of things,<br>Let Nature be your teacher.', 'William Wordsworth, “The Tables Turned”'],
+    ['Wonder', 'first_snow', 'My heart leaps up when I behold<br>A rainbow in the sky:', 'William Wordsworth'],
+    ['Safety', 'lamp_left_on', 'Home is the sailor, home from sea,<br>And the hunter home from the hill.', 'Robert Louis Stevenson, “Requiem”'],
+    ['Aliveness', 'heartbeat', '“Hope” is the thing with feathers –<br>That perches in the soul –', 'Emily Dickinson'],
   ],
   zh: [
-    ['温暖', '热牛奶', '温暖', ''],
-    ['亲近', '牵着的手', '亲近', ''],
-    ['温柔', '毯子', '温柔', ''],
-    ['惊喜', '初雪', '惊喜', ''],
-    ['安心', '留着的灯', '安心', ''],
-    ['生命感', '心跳', '生命感', ''],
+    ['温暖', '热牛奶', '绿蚁新醅酒，红泥小火炉。<br>晚来天欲雪，能饮一杯无？', '白居易《问刘十九》'],
+    ['亲近', '牵着的手', '执子之手，与子偕老。', '《诗经·邶风·击鼓》'],
+    ['温柔', '毯子', '随风潜入夜，润物细无声。', '杜甫《春夜喜雨》'],
+    ['惊喜', '初雪', '忽如一夜春风来，<br>千树万树梨花开。', '岑参《白雪歌送武判官归京》'],
+    ['安心', '留着的灯', '何当共剪西窗烛，<br>却话巴山夜雨时。', '李商隐《夜雨寄北》'],
+    ['生命感', '心跳', '野火烧不尽，春风吹又生。', '白居易《赋得古原草送别》'],
   ],
 }[LANG];
 
@@ -204,8 +208,8 @@ document.getElementById('lang').onclick = () => { localStorage.setItem('oxytocin
 document.getElementById('title').innerHTML = COPY.title.map((w, i) => `<span class="mask"><span class="word" style="--i:${i}">${w}</span></span>`).join('');
 document.getElementById('chapters').innerHTML = CHAPTERS.map(([label, guess, head, desc], n) => `
   <article class="chapter" style="--n:${n}">
-    <header><p class="meta"><span>0${n + 1} ${label}</span><span>${guess} → ${label.toLowerCase()}</span></p><h3>${head}</h3></header>
-    <p class="desc">${desc}</p>
+    <header><p class="meta"><span>0${n + 1}</span><span>${guess} → ${label.toLowerCase()}</span></p><h3>${label}</h3></header>
+    <p class="desc"><span class="quote">${head}</span><span class="src">${desc}</span></p>
   </article>`).join('');
 
 // reveals, each plays once
